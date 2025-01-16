@@ -1,0 +1,3 @@
+*.o
+libmx.a
+mx

@@ -1,0 +1,46 @@
+// Scope: 0
+c["#include <stdio.h>"]; // MXStaticValue.CSyntaxLiteral
+
+export fn main(): c["int"] { // Scope: 1
+    // Scope: 2
+    c["printf"]("Hello world\n");
+    return cast[0, c["int"]];
+}
+
+// main => MXStaticValue.FnConstructor {
+//     static_parameters: map [],
+//     parameter: map [],
+//     body: MXStaticValue.Block(...)
+// }
+
+struct Vec[T: Type, n: IntLiteral] { // Scope: 3
+    // Scope: 4
+    export var x: T; // MXStaticValue.VarDecl
+    export var y: T; // MXStaticValue.VarDecl
+
+    // MXStaticValue.IfStmt
+    if n == 3 {
+        // Scope: 5
+        export var z: T; // MXStaticValue.VarDecl
+    }
+}
+
+// Vec[T, n] => MXStaticValue.StructConstructor {
+//     static_parameters: map [
+//         MXStaticValue.
+//     ],
+//     body: MXStaticValue.Block(...)
+// }
+
+static Vec3f = Vec[Float32, 3]; // MXStaticValue.Identifier(Vec3f) = MXStaticValue.Struct(...)
+
+// Vec3F => MXStaticValue.Struct {
+//    fields: map [
+//        x: MXStaticValue.Type(Float32),
+//        y: MXStaticValue.Type(Float32),
+//        z: MXStaticValue.Type(Float32)
+//    ],
+//    fns: [
+//        MXStaticValue
+//    ]
+// }

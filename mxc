@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Check if an argument was provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 <filename.mx>"
+    exit 1
+fi
+
+# Extract the base filename without extension
+BASENAME="${1%.mx}"
+
+# Replace .mx extension with .c, and format the output
+./mx "$1" | clang-format > "${BASENAME}.c"
+
+# Compile the generated .c file with clang
+clang -Isrc "${BASENAME}.c" -o "$BASENAME"
+
+# Check for compilation success
+if [ $? -eq 0 ]; then
+    echo "Compilation successful."
+    echo "Output: $BASENAME"
+else
+    echo "Compilation failed."
+    exit 1
+fi
+
