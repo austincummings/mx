@@ -34,7 +34,7 @@ module.exports = grammar({
 
     // Declarations
 
-    _decl: $ => seq(optional("export"), choice($.fn_decl, $.var_decl, $.static_decl, $.struct_decl)),
+    _decl: $ => seq(choice($.fn_decl, $.var_decl, $.static_decl, $.struct_decl)),
 
     fn_decl: $ => seq(
       "fn",

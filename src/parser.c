@@ -10,7 +10,6 @@ static void walk_tree(MXParser *parser) {
 
     do {
         TSNode node = ts_tree_cursor_current_node(&parser->cursor);
-        const char *node_type = ts_node_type(node);
 
         if (ts_node_is_error(node)) {
             TSPoint start = ts_node_start_point(node);
@@ -24,19 +23,6 @@ static void walk_tree(MXParser *parser) {
             continue;
         }
 
-        debug("Node: %s\n", node_type);
-
-        // if (strcmp(node_type, "module") == 0 ||
-        //     strcmp(node_type, "block") == 0) {
-        // } else if (strcmp(node_type, "fn_decl") == 0 ||
-        //            strcmp(node_type, "struct_decl") == 0) {
-        //     bind_to_current_scope(parser, node_index);
-        //     parser->current_scope = introduce_scope(parser);
-        // } else if (strcmp(node_type, "var_decl") == 0 ||
-        //            strcmp(node_type, "static_decl") == 0) {
-        //     bind_to_current_scope(parser, node_index);
-        // }
-        //
         if (ts_tree_cursor_goto_first_child(&parser->cursor)) {
             walk_tree(parser);
             ts_tree_cursor_goto_parent(&parser->cursor);

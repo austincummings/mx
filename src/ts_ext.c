@@ -1,7 +1,6 @@
-#include <inttypes.h>
-#include <tree_sitter/api.h>
-
 #include "ts_ext.h"
+#include "map.h"
+#include <tree_sitter/api.h>
 
 void ts_node_print(Arena *a, const TSNode node, const char *src) {
     assert(a != NULL);
@@ -22,26 +21,6 @@ void ts_node_print(Arena *a, const TSNode node, const char *src) {
     fprintf(stderr, "```\n");
 }
 
-char *ts_node_position(Arena *a, const TSNode node, const char *src) {
-    assert(a != NULL);
-    assert(!ts_node_is_null(node));
-    assert(src != NULL);
-
-    // Get the start and end positions of the node
-    TSPoint start = ts_node_start_point(node);
-    TSPoint end = ts_node_end_point(node);
-
-    // Allocate space for the formatted position string
-    size_t buffer_size = 100; // Sufficient for typical line:column formatting
-    char *position_str = arena_alloc(a, buffer_size);
-
-    // Format the position as a string
-    snprintf(position_str, buffer_size, "%u:%u - %u:%u", start.row + 1,
-             start.column + 1, end.row + 1, end.column + 1);
-
-    return position_str;
-}
-
 char *ts_node_text(Arena *a, const TSNode node, const char *src) {
     assert(a != NULL);
     assert(!ts_node_is_null(node));
@@ -54,6 +33,22 @@ char *ts_node_text(Arena *a, const TSNode node, const char *src) {
     memcpy(text, src + start, size);
     text[size] = '\0';
     return text;
+}
+
+char *ts_node_id_to_string(Arena *a, uintptr_t node_id) {
+    // Pre-calculate the size needed for the string representation
+    size_t s = snprintf(NULL, 0, "%" PRIuPTR, node_id) + 1;
+
+    // Allocate memory in the arena for the string representation
+    char *buffer = (char *)arena_alloc(a, s);
+    if (buffer == NULL) {
+        return NULL; // Allocation failed
+    }
+
+    // Convert the uintptr_t node_id to a string
+    snprintf(buffer, s, "%" PRIuPTR, node_id);
+
+    return buffer;
 }
 
 char *ts_node_name(Arena *a, const TSNode node, const char *src) {
@@ -113,4 +108,92 @@ void ts_node_list_add(Arena *a, TSNodeList *list, TSNode node) {
         list->capacity = new_capacity;
     }
     list->nodes[list->count++] = node;
+}
+
+HashMap *ts_node_query(Arena *a, TSNode node, const TSLanguage *language,
+                       const char *query_string) {
+    // Create the TSQuery from the query string
+    uint32_t error_offset;
+    TSQueryError error_type;
+    TSQuery *query = ts_query_new(language, query_string, strlen(query_string),
+                                  &error_offset, &error_type);
+    if (!query) {
+        fprintf(stderr,
+                "Failed to create TSQuery: error at offset %u, error type %d\n",
+                error_offset, error_type);
+        fprintf(stderr, "Query:\n%s\n", query_string);
+        return NULL;
+    }
+
+    // Create a query cursor
+    TSQueryCursor *cursor = ts_query_cursor_new();
+
+    // Initialize the hash map using the arena allocator
+    HashMap *capture_map = hashmap_init(a);
+
+    // Iterate through matches found by the query cursor
+    ts_query_cursor_exec(cursor, query, node);
+    TSQueryMatch match;
+    while (ts_query_cursor_next_match(cursor, &match)) {
+        // fprintf(stderr, "match capture count: %d\n", match.capture_count);
+        for (uint32_t i = 0; i < match.capture_count; i++) {
+            // Extract information from each capture
+            TSQueryCapture capture = match.captures[i];
+            TSNode captured_node = capture.node;
+            uint32_t capture_index = capture.index;
+            uint32_t len = 0;
+            const char *capture_name =
+                ts_query_capture_name_for_id(query, capture_index, &len);
+            // fprintf(stderr, "capture name: %s\n", capture_name);
+
+            // Check if the capture index is already in the map
+            TSNodeList *node_list =
+                (TSNodeList *)hashmap_get(capture_map, capture_name);
+            if (!node_list) {
+                // If not present, create a new TSNodeList
+                node_list = (TSNodeList *)arena_alloc(a, sizeof(TSNodeList));
+                ts_node_list_init(a, node_list, 10);
+                hashmap_insert(a, capture_map, capture_name, (void *)node_list);
+            }
+
+            // Add the captured node to the list
+            ts_node_list_add(a, node_list, captured_node);
+        }
+    }
+
+    // Clean up TSQuery and query cursor after use
+    ts_query_cursor_delete(cursor);
+    ts_query_delete(query);
+
+    assert(capture_map != NULL);
+
+    return capture_map;
+}
+
+TSNodeList *ts_query_nodes(HashMap *query_results, char *capture_name) {
+    assert(query_results != NULL);
+    assert(capture_name != NULL);
+
+    TSNodeList *nodes = hashmap_get(query_results, capture_name);
+    return nodes;
+}
+
+TSNode ts_query_first_node(HashMap *query_results, char *capture_name) {
+    assert(query_results != NULL);
+    assert(capture_name != NULL);
+
+    TSNodeList *list = ts_query_nodes(query_results, capture_name);
+    if (list == NULL) {
+        fprintf(stderr, "Could not find capture in query results: %s\n",
+                capture_name);
+        return (TSNode){0};
+    }
+    TSNode node = list->nodes[0];
+    return node;
+}
+
+bool ts_query_has_capture(HashMap *query_results, char *capture_name) {
+    assert(query_results != NULL);
+    assert(capture_name != NULL);
+    return hashmap_get(query_results, capture_name) != NULL;
 }

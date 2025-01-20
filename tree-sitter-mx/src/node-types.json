@@ -418,10 +418,6 @@
             "named": true
           },
           {
-            "type": "export",
-            "named": false
-          },
-          {
             "type": "expr_stmt",
             "named": true
           },
@@ -2695,10 +2691,6 @@
   {
     "type": "escape_sequence",
     "named": true
-  },
-  {
-    "type": "export",
-    "named": false
   },
   {
     "type": "false",

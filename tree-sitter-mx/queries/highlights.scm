@@ -62,7 +62,6 @@
  "new"
  "map"
  "to"
- "export"
 ] @keyword
 
 [

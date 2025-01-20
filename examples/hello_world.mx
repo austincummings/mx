@@ -1,28 +1,47 @@
 // Scope: 0
 c["#include <stdio.h>"]; // MXStaticValue.CSyntaxLiteral
 
-export fn main(): c["int"] {
+fn main(): c["int"] {
     c["printf"]("Hello world\n"); // MXStaticValue.ExprStmt
-    return cast[0, c["int"]]; // MXStaticValue.CType(int, 0)
+    return cast[0, c["int"]]; // MXStaticValue.ReturnStmt(MXStaticValue.CValue(int, 0))
 }
 
-// main => MXStaticValue.FnConstructor {
+// main => MXStaticValue.FnDecl {
 //     static_parameters: map [],
 //     parameter: map [],
 //     body: MXStaticValue.Block(...)
 // }
 
 struct Vec[T: Type, n: IntLiteral] {
-    export var x: T; // x = MXStaticValue.VarDecl
-    export var y: T; // y = MXStaticValue.VarDecl
+    var x: T; // x = MXStaticValue.VarDecl
+    var y: T; // y = MXStaticValue.VarDecl
 
     // MXStaticValue.IfStmt
     if n == 3 {
-        export var z: T; // z = MXStaticValue.VarDecl
+        var z: T; // z = MXStaticValue.VarDecl
+    }
+
+    cond[[
+        [n == 3, {
+            mx.io.print("It's 3\n");
+        }],
+        [true, {
+            mx.io.print("Hello world\n");
+        }]
+    ]];
+}
+
+fn cond[conds: ListLiteral[ListLiteral[StaticValue]]]() {
+    for t in conds {
+        var cond = t.first;
+        var then = t.second;
+        if mx.meta.eval(cond) {
+            mx.meta.eval(then);
+        }
     }
 }
 
-// Vec[T, n] => MXStaticValue.StructConstructor {
+// Vec[T, n] => MXStaticValue.StructDecl {
 //     static_parameters: map [
 //         MXStaticValue.
 //     ],
@@ -41,3 +60,12 @@ static Vec3f = Vec[Float32, 3]; // MXStaticValue.Struct(...)
 //        MXStaticValue
 //    ]
 // }
+
+// interface Allocator {
+//     fn alloc(): Pointer;
+// }
+
+struct ArrayList[T: Type, A: Allocator] {
+    fn init(): Self {
+    }
+}
