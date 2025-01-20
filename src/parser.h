@@ -16,14 +16,12 @@ typedef struct {
 } ParserError;
 
 typedef ArrayList(ParserError) ParserErrorList;
-typedef ArrayList(TSNode) NodeList;
 
 typedef struct {
     Arena a;
     TSTreeCursor cursor;
+    TSTree *tree;
     const char *src;
-
-    NodeList nodes;
 
     ParserErrorList errors;
 } MXParser;
@@ -33,7 +31,5 @@ MXParser mx_parser_new(const char *src);
 void mx_parser_parse(MXParser *self);
 
 void mx_parser_report_errors(MXParser *self);
-
-Index mx_parser_append_node(MXParser *self, TSNode node);
 
 #endif // PARSER_H

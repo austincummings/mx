@@ -24,9 +24,7 @@ static void walk_tree(MXParser *parser) {
             continue;
         }
 
-        Index node_index = mx_parser_append_node(parser, node);
-
-        debug("Node: %d %s\n", node_index, node_type);
+        debug("Node: %s\n", node_type);
 
         // if (strcmp(node_type, "module") == 0 ||
         //     strcmp(node_type, "block") == 0) {
@@ -56,9 +54,6 @@ MXParser mx_parser_new(const char *src) {
 
     self.src = src;
 
-    self.nodes = (NodeList){0};
-    arraylist_init(&self.a, &self.nodes, 65536);
-
     self.errors = (ParserErrorList){0};
     arraylist_init(&self.a, &self.errors, 1024);
 
@@ -73,6 +68,8 @@ void mx_parser_parse(MXParser *self) {
     TSTree *tree =
         ts_parser_parse_string(parser, NULL, self->src, strlen(self->src));
     assert(tree != NULL);
+
+    self->tree = tree;
 
     TSNode root_node = ts_tree_root_node(tree);
     assert(!ts_node_is_null(root_node));
@@ -89,13 +86,4 @@ void mx_parser_report_errors(MXParser *self) {
                 error->start.row + 1, error->start.column, error->end.row + 1,
                 error->end.column);
     }
-}
-
-Index mx_parser_append_node(MXParser *self, TSNode node) {
-    assert(self != NULL);
-    assert(!ts_node_is_null(node));
-
-    Index i = (Index)self->nodes.size;
-    arraylist_add(&self->a, &self->nodes, node);
-    return i;
 }

@@ -4,6 +4,7 @@
 #include "arena.h"
 #include "debug.h"
 #include "parser.h"
+#include "sema.h"
 
 void usage(const char **argv) {
     fprintf(stderr, "Usage: %s <path>\n", argv[0]);
@@ -43,12 +44,14 @@ int main(int argc, const char **argv) {
     MXParser parser = mx_parser_new(src);
     mx_parser_parse(&parser);
 
-    debug("found %zu nodes\n", parser.nodes.size);
-
     if (parser.errors.size > 0) {
         mx_parser_report_errors(&parser);
         return 1;
     }
+
+    MXSemanticAnalyzer sema = mx_semantic_analyzer_new(src);
+    sema.tree = parser.tree;
+    mx_semantic_analyzer_analyze(&sema);
 
     const char *c_code = "";
     printf("%s\n", c_code);
