@@ -3,7 +3,7 @@
   "name": "mx",
   "word": "identifier",
   "rules": {
-    "source_file": {
+    "module": {
       "type": "REPEAT",
       "content": {
         "type": "CHOICE",

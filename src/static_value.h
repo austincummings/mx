@@ -2,6 +2,7 @@
 #define STATIC_VALUE_H
 
 #include "array_list.h"
+
 typedef enum {
     // Code Static Values
     // Declarations
@@ -52,20 +53,125 @@ typedef struct {
     MXStaticValueList children;
 } MXStaticValueModule;
 
+typedef struct {
+    char *fn_name;
+    MXStaticValueList params;
+    MXStaticValue *expr;
+} MXStaticValueFnDecl;
+
+typedef struct {
+    char *var_name;
+    MXStaticValue *expr;
+} MXStaticValueVarDecl;
+
+// Add similar struct definitions for each enum value as required:
+typedef struct {
+    char *struct_name;
+    MXStaticValueList members;
+} MXStaticValueStructDecl;
+
+typedef struct {
+    MXStaticValue *expr;
+} MXStaticValueExprStmt;
+
+typedef struct {
+    // No additional fields
+    uint8_t _;
+} MXStaticValueBreakStmt;
+
+typedef struct {
+    // No additional fields
+    uint8_t _;
+} MXStaticValueContinueStmt;
+
+typedef struct {
+    MXStaticValue *expr;
+} MXStaticValueReturnStmt;
+
+typedef struct {
+    MXStaticValue *cond;
+    MXStaticValueList body;
+} MXStaticValueIfStmt;
+
+typedef struct {
+    MXStaticValueList body;
+} MXStaticValueLoopStmt;
+
+typedef struct {
+    char *iter_var;
+    MXStaticValue *expr;
+    MXStaticValueList body;
+} MXStaticValueForStmt;
+
+typedef struct {
+    MXStaticValue *lhs;
+    MXStaticValue *rhs;
+} MXStaticValueAssignStmt;
+
+typedef struct {
+    uint64_t int_value;
+} MXStaticValueIntLiteral;
+
+typedef struct {
+    double float_value;
+} MXStaticValueFloatLiteral;
+
+typedef struct {
+    char *string_value;
+} MXStaticValueStringLiteral;
+
+typedef struct {
+    bool bool_value;
+} MXStaticValueBoolLiteral;
+
+typedef struct {
+    MXStaticValueList items;
+} MXStaticValueListLiteral;
+
+typedef struct {
+    MXStaticValueList keys;
+    MXStaticValueList values;
+} MXStaticValueMapLiteral;
+
+typedef struct {
+    char *identifier_name;
+} MXStaticValueIdentifier;
+
+typedef struct {
+    MXStaticValue *expr;
+    MXStaticValueList args;
+} MXStaticValueCallExpr;
+
+typedef struct {
+    MXStaticValue *base;
+    char *member_name;
+} MXStaticValueMemberExpr;
+
 struct MXStaticValue {
     MXStaticValueKind kind;
     union {
         MXStaticValueModule module;
+        MXStaticValueFnDecl fn_decl;
+        MXStaticValueVarDecl var_decl;
+        MXStaticValueStructDecl struct_decl;
+        MXStaticValueExprStmt expr_stmt;
+        MXStaticValueBreakStmt break_stmt;
+        MXStaticValueContinueStmt continue_stmt;
+        MXStaticValueReturnStmt return_stmt;
+        MXStaticValueIfStmt if_stmt;
+        MXStaticValueLoopStmt loop_stmt;
+        MXStaticValueForStmt for_stmt;
+        MXStaticValueAssignStmt assign_stmt;
+        MXStaticValueIntLiteral int_literal;
+        MXStaticValueFloatLiteral float_literal;
+        MXStaticValueStringLiteral string_literal;
+        MXStaticValueBoolLiteral bool_literal;
+        MXStaticValueListLiteral list_literal;
+        MXStaticValueMapLiteral map_literal;
+        MXStaticValueIdentifier identifier;
+        MXStaticValueCallExpr call_expr;
+        MXStaticValueMemberExpr member_expr;
     };
 };
-
-typedef struct {
-} MXStaticEnv;
-
-// Conversion Rules:
-// Declarations are translated as is
-// Statements are translated as is
-// Expressions:
-// Static expressions are evaluated
 
 #endif // STATIC_VALUE_H

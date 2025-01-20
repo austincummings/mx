@@ -1478,6 +1478,66 @@
     }
   },
   {
+    "type": "module",
+    "named": true,
+    "root": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "assign_stmt",
+          "named": true
+        },
+        {
+          "type": "break_stmt",
+          "named": true
+        },
+        {
+          "type": "continue_stmt",
+          "named": true
+        },
+        {
+          "type": "expr_stmt",
+          "named": true
+        },
+        {
+          "type": "fn_decl",
+          "named": true
+        },
+        {
+          "type": "for_stmt",
+          "named": true
+        },
+        {
+          "type": "if_stmt",
+          "named": true
+        },
+        {
+          "type": "loop_stmt",
+          "named": true
+        },
+        {
+          "type": "return_stmt",
+          "named": true
+        },
+        {
+          "type": "static_decl",
+          "named": true
+        },
+        {
+          "type": "struct_decl",
+          "named": true
+        },
+        {
+          "type": "var_decl",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "multiline_string_literal",
     "named": true,
     "fields": {},
@@ -1825,66 +1885,6 @@
           }
         ]
       }
-    }
-  },
-  {
-    "type": "source_file",
-    "named": true,
-    "root": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": false,
-      "types": [
-        {
-          "type": "assign_stmt",
-          "named": true
-        },
-        {
-          "type": "break_stmt",
-          "named": true
-        },
-        {
-          "type": "continue_stmt",
-          "named": true
-        },
-        {
-          "type": "expr_stmt",
-          "named": true
-        },
-        {
-          "type": "fn_decl",
-          "named": true
-        },
-        {
-          "type": "for_stmt",
-          "named": true
-        },
-        {
-          "type": "if_stmt",
-          "named": true
-        },
-        {
-          "type": "loop_stmt",
-          "named": true
-        },
-        {
-          "type": "return_stmt",
-          "named": true
-        },
-        {
-          "type": "static_decl",
-          "named": true
-        },
-        {
-          "type": "struct_decl",
-          "named": true
-        },
-        {
-          "type": "var_decl",
-          "named": true
-        }
-      ]
     }
   },
   {
