@@ -2,8 +2,26 @@
 #define STATIC_VALUE_H
 
 #include "array_list.h"
+#include "map.h"
 
 typedef enum {
+    C_TYPE_UNKNOWN,
+    C_TYPE_VOID,
+    C_TYPE_BOOL,
+    C_TYPE_INT,
+    C_TYPE_INT8,
+    C_TYPE_INT16,
+    C_TYPE_INT32,
+    C_TYPE_INT64,
+    C_TYPE_UINT,
+    C_TYPE_UINT8,
+    C_TYPE_UINT16,
+    C_TYPE_UINT32,
+    C_TYPE_UINT64,
+} CType;
+
+typedef enum {
+    MX_STATIC_VALUE_EMPTY,
     // Code Static Values
     // Declarations
     MX_STATIC_VALUE_MODULE,      // <list of stmts and decls>
@@ -44,6 +62,10 @@ typedef enum {
     MX_STATIC_VALUE_TYPE,
     MX_STATIC_VALUE_STRUCT,
     MX_STATIC_VALUE_FN,
+
+    // C Types
+    MX_STATIC_VALUE_C_TYPE,
+    MX_STATIC_VALUE_C_VALUE
 } MXStaticValueKind;
 
 typedef struct MXStaticValue MXStaticValue;
@@ -147,6 +169,27 @@ typedef struct {
     char *member_name;
 } MXStaticValueMemberExpr;
 
+typedef struct {
+    CType type;
+} MXStaticValueCType;
+
+typedef struct {
+    CType type;
+    union {
+        bool bool_value;
+        int int_value;
+        int8_t int8_value;
+        int16_t int16_value;
+        int32_t int32_value;
+        int64_t int64_value;
+        unsigned int uint_value;
+        uint8_t uint8_value;
+        uint16_t uint16_value;
+        uint32_t uint32_value;
+        uint64_t uint64_value;
+    };
+} MXStaticValueCValue;
+
 struct MXStaticValue {
     MXStaticValueKind kind;
     union {
@@ -171,7 +214,16 @@ struct MXStaticValue {
         MXStaticValueIdentifier identifier;
         MXStaticValueCallExpr call_expr;
         MXStaticValueMemberExpr member_expr;
+        MXStaticValueCType c_type;
+        MXStaticValueCValue c_value;
     };
 };
+
+typedef struct StaticEnv {
+    struct StaticEnv *parent;
+    HashMap *members;
+} StaticEnv;
+
+StaticEnv *static_env_new(Arena *a, StaticEnv *parent);
 
 #endif // STATIC_VALUE_H

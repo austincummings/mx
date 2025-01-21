@@ -1,7 +1,6 @@
 #include <tree_sitter/api.h>
 
 #include "arena.h"
-#include "debug.h"
 #include "parser.h"
 
 static void walk_tree(MXParser *parser) {

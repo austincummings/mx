@@ -10,7 +10,6 @@ typedef struct {
     const char *src;
 
     TSTree *tree;
-    TSTreeCursor cursor;
 } MXSemanticAnalyzer;
 
 MXSemanticAnalyzer mx_semantic_analyzer_new(const char *src);

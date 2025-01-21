@@ -1,0 +1,8 @@
+struct {
+    var value: c_type["bool"];
+
+    fn init(self: ref[Self]): c_type["void"] {
+    }
+}
+
+var b = Bool(c_value[true]);
