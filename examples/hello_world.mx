@@ -1,1 +1,4 @@
-static C_ZERO: c_type["int"] = c_value[0];
+const C_ZERO: c_type["int"] = c_value[0];
+
+fn macro[](): MXNode {
+}
