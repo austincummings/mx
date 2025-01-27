@@ -1,0 +1,63 @@
+==========
+Return 0 from main
+==========
+
+fn main(): 0 {
+    return 0;
+}
+
+---
+
+#include "libmx.h"
+
+int main() {
+    return 0;
+}
+
+==========
+Return 42 from main
+==========
+
+fn main(): 42 {
+    return 42;
+}
+
+---
+
+#include "libmx.h"
+
+int main() {
+    return 42;
+}
+
+==========
+Return a C int from main
+==========
+
+fn main(): c_type["int"] {
+    return c_value[42];
+}
+
+---
+
+#include "libmx.h"
+
+int main() {
+    return 42;
+}
+
+==========
+Return a C void from main
+==========
+
+fn main(): c_type["void"] {
+    return;
+}
+
+---
+
+#include "libmx.h"
+
+void main() {
+    return;
+}
