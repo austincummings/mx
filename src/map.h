@@ -29,7 +29,7 @@ typedef struct {
 
 HashMap *hashmap_init(Arena *a);
 
-void hashmap_insert(Arena *a, HashMap *hashmap, const char *key, void *value);
+void hashmap_set(Arena *a, HashMap *hashmap, const char *key, void *value);
 
 void *hashmap_get(HashMap *hashmap, const char *key);
 

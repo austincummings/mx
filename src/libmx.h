@@ -15,7 +15,7 @@ typedef struct MXFnType MXFnType;
 typedef struct MXStructType MXStructType;
 typedef struct MXType MXType;
 
-// Static values
+// Comptime values
 typedef struct MXIntLiteral MXIntLiteral;
 typedef struct MXFloatLiteral MXFloatLiteral;
 typedef struct MXBoolLiteral MXBoolLiteral;
@@ -25,7 +25,7 @@ typedef struct MXSyntaxLiteral MXSyntaxLiteral;
 typedef struct MXModule MXModule;
 typedef struct MXFn MXFn;
 typedef struct MXStruct MXStruct;
-typedef struct MXStaticValue MXStaticValue;
+typedef struct MXComptimeValue MXComptimeValue;
 
 // Runtime built in types
 

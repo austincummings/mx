@@ -28,10 +28,6 @@
             "named": true
           },
           {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
             "type": "float_literal",
             "named": true
           },
@@ -48,14 +44,6 @@
             "named": true
           },
           {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
             "type": "member_expr",
             "named": true
           },
@@ -64,15 +52,7 @@
             "named": true
           },
           {
-            "type": "range_expr",
-            "named": true
-          },
-          {
             "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
             "named": true
           },
           {
@@ -106,10 +86,6 @@
             "named": true
           },
           {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
             "type": "float_literal",
             "named": true
           },
@@ -126,14 +102,6 @@
             "named": true
           },
           {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
             "type": "member_expr",
             "named": true
           },
@@ -142,15 +110,7 @@
             "named": true
           },
           {
-            "type": "range_expr",
-            "named": true
-          },
-          {
             "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
             "named": true
           },
           {
@@ -190,10 +150,6 @@
             "named": true
           },
           {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
             "type": "float_literal",
             "named": true
           },
@@ -210,14 +166,6 @@
             "named": true
           },
           {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
             "type": "member_expr",
             "named": true
           },
@@ -226,15 +174,7 @@
             "named": true
           },
           {
-            "type": "range_expr",
-            "named": true
-          },
-          {
             "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
             "named": true
           },
           {
@@ -342,10 +282,6 @@
             "named": true
           },
           {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
             "type": "float_literal",
             "named": true
           },
@@ -362,14 +298,6 @@
             "named": true
           },
           {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
             "type": "member_expr",
             "named": true
           },
@@ -378,15 +306,7 @@
             "named": true
           },
           {
-            "type": "range_expr",
-            "named": true
-          },
-          {
             "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
             "named": true
           },
           {
@@ -414,6 +334,10 @@
             "named": true
           },
           {
+            "type": "comptime_fn_decl",
+            "named": true
+          },
+          {
             "type": "const_decl",
             "named": true
           },
@@ -427,10 +351,6 @@
           },
           {
             "type": "fn_decl",
-            "named": true
-          },
-          {
-            "type": "for_stmt",
             "named": true
           },
           {
@@ -506,10 +426,6 @@
             "named": true
           },
           {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
             "type": "float_literal",
             "named": true
           },
@@ -526,14 +442,6 @@
             "named": true
           },
           {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
             "type": "member_expr",
             "named": true
           },
@@ -542,15 +450,7 @@
             "named": true
           },
           {
-            "type": "range_expr",
-            "named": true
-          },
-          {
             "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
             "named": true
           },
           {
@@ -582,10 +482,6 @@
             "named": true
           },
           {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
             "type": "float_literal",
             "named": true
           },
@@ -602,14 +498,6 @@
             "named": true
           },
           {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
             "type": "member_expr",
             "named": true
           },
@@ -619,10 +507,6 @@
           },
           {
             "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
             "named": true
           }
         ]
@@ -668,10 +552,6 @@
             "named": true
           },
           {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
             "type": "float_literal",
             "named": true
           },
@@ -688,14 +568,6 @@
             "named": true
           },
           {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
             "type": "member_expr",
             "named": true
           },
@@ -704,19 +576,57 @@
             "named": true
           },
           {
-            "type": "range_expr",
-            "named": true
-          },
-          {
             "type": "string_literal",
             "named": true
           },
           {
-            "type": "struct_expr",
-            "named": true
-          },
-          {
             "type": "unary_expr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "comptime_fn_decl",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "block",
+            "named": true
+          }
+        ]
+      },
+      "comptime_parameters": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "parameter_list",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "return_type": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "comptime_expr",
             "named": true
           }
         ]
@@ -793,10 +703,6 @@
           "named": true
         },
         {
-          "type": "ellipsis_expr",
-          "named": true
-        },
-        {
           "type": "float_literal",
           "named": true
         },
@@ -813,14 +719,6 @@
           "named": true
         },
         {
-          "type": "list_literal",
-          "named": true
-        },
-        {
-          "type": "map_literal",
-          "named": true
-        },
-        {
           "type": "member_expr",
           "named": true
         },
@@ -829,15 +727,7 @@
           "named": true
         },
         {
-          "type": "range_expr",
-          "named": true
-        },
-        {
           "type": "string_literal",
-          "named": true
-        },
-        {
-          "type": "struct_expr",
           "named": true
         },
         {
@@ -876,10 +766,6 @@
             "named": true
           },
           {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
             "type": "float_literal",
             "named": true
           },
@@ -896,14 +782,6 @@
             "named": true
           },
           {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
             "type": "member_expr",
             "named": true
           },
@@ -912,15 +790,7 @@
             "named": true
           },
           {
-            "type": "range_expr",
-            "named": true
-          },
-          {
             "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
             "named": true
           },
           {
@@ -988,110 +858,6 @@
     }
   },
   {
-    "type": "for_stmt",
-    "named": true,
-    "fields": {
-      "body": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "block",
-            "named": true
-          }
-        ]
-      },
-      "expr": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "binary_expr",
-            "named": true
-          },
-          {
-            "type": "block",
-            "named": true
-          },
-          {
-            "type": "bool_literal",
-            "named": true
-          },
-          {
-            "type": "call_expr",
-            "named": true
-          },
-          {
-            "type": "comptime_call_expr",
-            "named": true
-          },
-          {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
-            "type": "float_literal",
-            "named": true
-          },
-          {
-            "type": "group_expr",
-            "named": true
-          },
-          {
-            "type": "identifier",
-            "named": true
-          },
-          {
-            "type": "int_literal",
-            "named": true
-          },
-          {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
-            "type": "member_expr",
-            "named": true
-          },
-          {
-            "type": "multiline_string_literal",
-            "named": true
-          },
-          {
-            "type": "range_expr",
-            "named": true
-          },
-          {
-            "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
-            "named": true
-          },
-          {
-            "type": "unary_expr",
-            "named": true
-          }
-        ]
-      },
-      "ident": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "identifier",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
     "type": "group_expr",
     "named": true,
     "fields": {},
@@ -1120,10 +886,6 @@
           "named": true
         },
         {
-          "type": "ellipsis_expr",
-          "named": true
-        },
-        {
           "type": "float_literal",
           "named": true
         },
@@ -1140,14 +902,6 @@
           "named": true
         },
         {
-          "type": "list_literal",
-          "named": true
-        },
-        {
-          "type": "map_literal",
-          "named": true
-        },
-        {
           "type": "member_expr",
           "named": true
         },
@@ -1156,15 +910,7 @@
           "named": true
         },
         {
-          "type": "range_expr",
-          "named": true
-        },
-        {
           "type": "string_literal",
-          "named": true
-        },
-        {
-          "type": "struct_expr",
           "named": true
         },
         {
@@ -1203,10 +949,6 @@
             "named": true
           },
           {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
             "type": "float_literal",
             "named": true
           },
@@ -1223,14 +965,6 @@
             "named": true
           },
           {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
             "type": "member_expr",
             "named": true
           },
@@ -1239,15 +973,7 @@
             "named": true
           },
           {
-            "type": "range_expr",
-            "named": true
-          },
-          {
             "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
             "named": true
           },
           {
@@ -1287,259 +1013,9 @@
     }
   },
   {
-    "type": "kv_pair",
-    "named": true,
-    "fields": {
-      "key": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "binary_expr",
-            "named": true
-          },
-          {
-            "type": "block",
-            "named": true
-          },
-          {
-            "type": "bool_literal",
-            "named": true
-          },
-          {
-            "type": "call_expr",
-            "named": true
-          },
-          {
-            "type": "comptime_call_expr",
-            "named": true
-          },
-          {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
-            "type": "float_literal",
-            "named": true
-          },
-          {
-            "type": "group_expr",
-            "named": true
-          },
-          {
-            "type": "identifier",
-            "named": true
-          },
-          {
-            "type": "int_literal",
-            "named": true
-          },
-          {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
-            "type": "member_expr",
-            "named": true
-          },
-          {
-            "type": "multiline_string_literal",
-            "named": true
-          },
-          {
-            "type": "range_expr",
-            "named": true
-          },
-          {
-            "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
-            "named": true
-          },
-          {
-            "type": "unary_expr",
-            "named": true
-          }
-        ]
-      },
-      "value": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "binary_expr",
-            "named": true
-          },
-          {
-            "type": "block",
-            "named": true
-          },
-          {
-            "type": "bool_literal",
-            "named": true
-          },
-          {
-            "type": "call_expr",
-            "named": true
-          },
-          {
-            "type": "comptime_call_expr",
-            "named": true
-          },
-          {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
-            "type": "float_literal",
-            "named": true
-          },
-          {
-            "type": "group_expr",
-            "named": true
-          },
-          {
-            "type": "identifier",
-            "named": true
-          },
-          {
-            "type": "int_literal",
-            "named": true
-          },
-          {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
-            "type": "member_expr",
-            "named": true
-          },
-          {
-            "type": "multiline_string_literal",
-            "named": true
-          },
-          {
-            "type": "range_expr",
-            "named": true
-          },
-          {
-            "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
-            "named": true
-          },
-          {
-            "type": "unary_expr",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
     "type": "line_terminator",
     "named": true,
     "fields": {}
-  },
-  {
-    "type": "list_literal",
-    "named": true,
-    "fields": {
-      "exprs": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": ",",
-            "named": false
-          },
-          {
-            "type": "binary_expr",
-            "named": true
-          },
-          {
-            "type": "block",
-            "named": true
-          },
-          {
-            "type": "bool_literal",
-            "named": true
-          },
-          {
-            "type": "call_expr",
-            "named": true
-          },
-          {
-            "type": "comptime_call_expr",
-            "named": true
-          },
-          {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
-            "type": "float_literal",
-            "named": true
-          },
-          {
-            "type": "group_expr",
-            "named": true
-          },
-          {
-            "type": "identifier",
-            "named": true
-          },
-          {
-            "type": "int_literal",
-            "named": true
-          },
-          {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
-            "type": "member_expr",
-            "named": true
-          },
-          {
-            "type": "multiline_string_literal",
-            "named": true
-          },
-          {
-            "type": "range_expr",
-            "named": true
-          },
-          {
-            "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
-            "named": true
-          },
-          {
-            "type": "unary_expr",
-            "named": true
-          }
-        ]
-      }
-    }
   },
   {
     "type": "loop_stmt",
@@ -1551,26 +1027,6 @@
         "types": [
           {
             "type": "block",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
-    "type": "map_literal",
-    "named": true,
-    "fields": {
-      "pairs": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": ",",
-            "named": false
-          },
-          {
-            "type": "kv_pair",
             "named": true
           }
         ]
@@ -1606,10 +1062,6 @@
             "named": true
           },
           {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
             "type": "float_literal",
             "named": true
           },
@@ -1626,14 +1078,6 @@
             "named": true
           },
           {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
             "type": "member_expr",
             "named": true
           },
@@ -1642,15 +1086,7 @@
             "named": true
           },
           {
-            "type": "range_expr",
-            "named": true
-          },
-          {
             "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
             "named": true
           },
           {
@@ -1689,6 +1125,10 @@
           "named": true
         },
         {
+          "type": "comptime_fn_decl",
+          "named": true
+        },
+        {
           "type": "const_decl",
           "named": true
         },
@@ -1702,10 +1142,6 @@
         },
         {
           "type": "fn_decl",
-          "named": true
-        },
-        {
-          "type": "for_stmt",
           "named": true
         },
         {
@@ -1797,10 +1233,6 @@
             "named": true
           },
           {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
             "type": "float_literal",
             "named": true
           },
@@ -1817,14 +1249,6 @@
             "named": true
           },
           {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
             "type": "member_expr",
             "named": true
           },
@@ -1833,15 +1257,7 @@
             "named": true
           },
           {
-            "type": "range_expr",
-            "named": true
-          },
-          {
             "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
             "named": true
           },
           {
@@ -1865,136 +1281,6 @@
           "named": true
         }
       ]
-    }
-  },
-  {
-    "type": "range_expr",
-    "named": true,
-    "fields": {
-      "from": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "block",
-            "named": true
-          },
-          {
-            "type": "bool_literal",
-            "named": true
-          },
-          {
-            "type": "call_expr",
-            "named": true
-          },
-          {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
-            "type": "float_literal",
-            "named": true
-          },
-          {
-            "type": "group_expr",
-            "named": true
-          },
-          {
-            "type": "identifier",
-            "named": true
-          },
-          {
-            "type": "int_literal",
-            "named": true
-          },
-          {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
-            "type": "member_expr",
-            "named": true
-          },
-          {
-            "type": "multiline_string_literal",
-            "named": true
-          },
-          {
-            "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
-            "named": true
-          }
-        ]
-      },
-      "to": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "block",
-            "named": true
-          },
-          {
-            "type": "bool_literal",
-            "named": true
-          },
-          {
-            "type": "call_expr",
-            "named": true
-          },
-          {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
-            "type": "float_literal",
-            "named": true
-          },
-          {
-            "type": "group_expr",
-            "named": true
-          },
-          {
-            "type": "identifier",
-            "named": true
-          },
-          {
-            "type": "int_literal",
-            "named": true
-          },
-          {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
-            "type": "member_expr",
-            "named": true
-          },
-          {
-            "type": "multiline_string_literal",
-            "named": true
-          },
-          {
-            "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
-            "named": true
-          }
-        ]
-      }
     }
   },
   {
@@ -2026,10 +1312,6 @@
             "named": true
           },
           {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
             "type": "float_literal",
             "named": true
           },
@@ -2046,14 +1328,6 @@
             "named": true
           },
           {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
             "type": "member_expr",
             "named": true
           },
@@ -2062,15 +1336,7 @@
             "named": true
           },
           {
-            "type": "range_expr",
-            "named": true
-          },
-          {
             "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
             "named": true
           },
           {
@@ -2110,10 +1376,6 @@
           "named": true
         },
         {
-          "type": "ellipsis_expr",
-          "named": true
-        },
-        {
           "type": "float_literal",
           "named": true
         },
@@ -2130,14 +1392,6 @@
           "named": true
         },
         {
-          "type": "list_literal",
-          "named": true
-        },
-        {
-          "type": "map_literal",
-          "named": true
-        },
-        {
           "type": "member_expr",
           "named": true
         },
@@ -2146,15 +1400,7 @@
           "named": true
         },
         {
-          "type": "range_expr",
-          "named": true
-        },
-        {
           "type": "string_literal",
-          "named": true
-        },
-        {
-          "type": "struct_expr",
           "named": true
         },
         {
@@ -2224,141 +1470,6 @@
     }
   },
   {
-    "type": "struct_expr",
-    "named": true,
-    "fields": {
-      "fields": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "struct_field_expr_list",
-            "named": true
-          }
-        ]
-      },
-      "name": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "identifier",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
-    "type": "struct_field_expr",
-    "named": true,
-    "fields": {
-      "name": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "identifier",
-            "named": true
-          }
-        ]
-      },
-      "value": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "binary_expr",
-            "named": true
-          },
-          {
-            "type": "block",
-            "named": true
-          },
-          {
-            "type": "bool_literal",
-            "named": true
-          },
-          {
-            "type": "call_expr",
-            "named": true
-          },
-          {
-            "type": "comptime_call_expr",
-            "named": true
-          },
-          {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
-            "type": "float_literal",
-            "named": true
-          },
-          {
-            "type": "group_expr",
-            "named": true
-          },
-          {
-            "type": "identifier",
-            "named": true
-          },
-          {
-            "type": "int_literal",
-            "named": true
-          },
-          {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
-            "type": "member_expr",
-            "named": true
-          },
-          {
-            "type": "multiline_string_literal",
-            "named": true
-          },
-          {
-            "type": "range_expr",
-            "named": true
-          },
-          {
-            "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
-            "named": true
-          },
-          {
-            "type": "unary_expr",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
-    "type": "struct_field_expr_list",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "struct_field_expr",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "unary_expr",
     "named": true,
     "fields": {
@@ -2387,10 +1498,6 @@
             "named": true
           },
           {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
             "type": "float_literal",
             "named": true
           },
@@ -2407,14 +1514,6 @@
             "named": true
           },
           {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
             "type": "member_expr",
             "named": true
           },
@@ -2423,15 +1522,7 @@
             "named": true
           },
           {
-            "type": "range_expr",
-            "named": true
-          },
-          {
             "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
             "named": true
           },
           {
@@ -2505,10 +1596,6 @@
             "named": true
           },
           {
-            "type": "ellipsis_expr",
-            "named": true
-          },
-          {
             "type": "float_literal",
             "named": true
           },
@@ -2525,14 +1612,6 @@
             "named": true
           },
           {
-            "type": "list_literal",
-            "named": true
-          },
-          {
-            "type": "map_literal",
-            "named": true
-          },
-          {
             "type": "member_expr",
             "named": true
           },
@@ -2541,15 +1620,7 @@
             "named": true
           },
           {
-            "type": "range_expr",
-            "named": true
-          },
-          {
             "type": "string_literal",
-            "named": true
-          },
-          {
-            "type": "struct_expr",
             "named": true
           },
           {
@@ -2677,16 +1748,16 @@
     "named": false
   },
   {
+    "type": "comptime",
+    "named": false
+  },
+  {
     "type": "const",
     "named": false
   },
   {
     "type": "continue",
     "named": false
-  },
-  {
-    "type": "ellipsis_expr",
-    "named": true
   },
   {
     "type": "else",
@@ -2709,19 +1780,11 @@
     "named": false
   },
   {
-    "type": "for",
-    "named": false
-  },
-  {
     "type": "identifier",
     "named": true
   },
   {
     "type": "if",
-    "named": false
-  },
-  {
-    "type": "in",
     "named": false
   },
   {
@@ -2737,16 +1800,8 @@
     "named": false
   },
   {
-    "type": "map",
-    "named": false
-  },
-  {
     "type": "multiline_string_fragment",
     "named": true
-  },
-  {
-    "type": "new",
-    "named": false
   },
   {
     "type": "or",
@@ -2762,10 +1817,6 @@
   },
   {
     "type": "struct",
-    "named": false
-  },
-  {
-    "type": "to",
     "named": false
   },
   {

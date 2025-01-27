@@ -153,7 +153,7 @@ HashMap *ts_node_query(Arena *a, TSNode node, const TSLanguage *language,
                 // If not present, create a new TSNodeList
                 node_list = (TSNodeList *)arena_alloc(a, sizeof(TSNodeList));
                 ts_node_list_init(a, node_list, 10);
-                hashmap_insert(a, capture_map, capture_name, (void *)node_list);
+                hashmap_set(a, capture_map, capture_name, (void *)node_list);
             }
 
             // Add the captured node to the list

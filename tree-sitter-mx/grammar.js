@@ -34,7 +34,22 @@ module.exports = grammar({
 
     // Declarations
 
-    _decl: $ => seq(choice($.fn_decl, $.var_decl, $.const_decl, $.struct_decl)),
+    _decl: $ => seq(choice($._fn_decl, $.var_decl, $.const_decl, $.struct_decl)),
+
+    _fn_decl: $ => choice(
+      $.comptime_fn_decl,
+      $.fn_decl
+    ),
+
+    comptime_fn_decl: $ => seq(
+      "comptime",
+      "fn",
+      field("name", $.identifier),
+      optional(seq("[", field("comptime_parameters", optional($.parameter_list)), "]")),
+      ":",
+      field("return_type", $.comptime_expr),
+      field("body", $.block),
+    ),
 
     fn_decl: $ => seq(
       "fn",
@@ -108,7 +123,6 @@ module.exports = grammar({
       $.unary_expr,
       $.binary_expr,
       $.comptime_call_expr,
-      $.range_expr,
       $._primary_expr,
     ),
 
@@ -116,7 +130,6 @@ module.exports = grammar({
       $.unary_expr,
       $.binary_expr,
       $.comptime_call_expr,
-      $.range_expr,
       $._primary_expr,
     )),
 
@@ -126,13 +139,9 @@ module.exports = grammar({
       $.string_literal,
       $.multiline_string_literal,
       $.bool_literal,
-      $.list_literal,
-      $.map_literal,
       $.identifier,
-      $.ellipsis_expr,
       $.call_expr,
       $.member_expr,
-      $.struct_expr,
       $.group_expr,
       $.block,
     ),
@@ -143,28 +152,7 @@ module.exports = grammar({
       field("member", $.identifier),
     )),
 
-    struct_expr: $ => prec(PREC.struct, seq(
-      "new",
-      field("name", optional($.identifier)),
-      "{",
-      field("fields", optional($.struct_field_expr_list)),
-      "}",
-    )),
-
-    struct_field_expr_list: $ => seq(
-      $.struct_field_expr,
-      repeat(seq(",", $.struct_field_expr)),
-      optional(","),
-    ),
-
-    struct_field_expr: $ => seq(
-      field("name", $.identifier),
-      optional(seq(":", field("value", $._expr)))
-    ),
-
     group_expr: $ => prec(PREC.group, seq("(", $._expr, ")")),
-
-    range_expr: $ => prec(PREC.range, seq(field("from", $._primary_expr), "to", field("to", $._primary_expr))),
 
     unary_expr: $ => prec(PREC.unary, seq(
       field("operator", choice("-", "!")),
@@ -202,8 +190,6 @@ module.exports = grammar({
       field("arguments", optional($.expr_list)),
       ")",
     )),
-
-    ellipsis_expr: _ => "...",
 
     block: $ => seq(
       "{",
@@ -266,20 +252,6 @@ module.exports = grammar({
     ),
 
     bool_literal: $ => choice("true", "false"),
-
-    list_literal: $ => seq("[", field("exprs", optional(seq(
-      $._expr,
-      repeat(seq(",", $._expr)))
-    )), "]"),
-
-    map_literal: $ => seq(
-      "map",
-      "[",
-      field("pairs", optional(seq($.kv_pair, repeat(seq(",", $.kv_pair))))),
-      "]"
-    ),
-
-    kv_pair: $ => seq(field("key", $._expr), ":", field("value", $._expr)),
 
     // Misc
 

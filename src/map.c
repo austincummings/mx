@@ -19,7 +19,7 @@ HashMap *hashmap_init(Arena *a) {
     return hashmap;
 }
 
-void hashmap_insert(Arena *a, HashMap *hashmap, const char *key, void *value) {
+void hashmap_set(Arena *a, HashMap *hashmap, const char *key, void *value) {
     uint32_t index = hash(key);
     HashNode *new_node = arena_alloc(a, sizeof(HashNode));
     new_node->key = arena_alloc(a, strlen(key) + 1);

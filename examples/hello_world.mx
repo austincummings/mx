@@ -1,4 +1,3 @@
-const C_ZERO: c_type["int"] = c_value[0];
-
-fn macro[](): MXNode {
+fn main(): 0 {
+    return 0;
 }

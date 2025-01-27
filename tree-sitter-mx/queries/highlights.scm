@@ -31,41 +31,18 @@
 ((identifier) @variable.builtin
   (#eq? @variable.builtin "self"))
 
-((identifier) @variable.builtin
-  (#eq? @variable.builtin "static_eval"))
-
-((identifier) @variable.builtin
-  (#eq? @variable.builtin "c_value"))
-
-((identifier) @variable.builtin
-  (#eq? @variable.builtin "c_type"))
-
-((identifier) @variable.builtin
-  (#eq? @variable.builtin "c_expr"))
-
-((identifier) @variable.builtin
-  (#eq? @variable.builtin "typeof"))
-
-((identifier) @variable.builtin
-  (#eq? @variable.builtin "ref"))
-
 [
  "fn"
  "if"
  "else"
  "return"
- ; "comptime"
  "const"
  "var"
  "struct"
  "loop"
- "for"
- "in"
  "break"
  "continue"
- "new"
- "map"
- "to"
+ "comptime"
 ] @keyword
 
 [

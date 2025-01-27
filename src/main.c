@@ -49,7 +49,7 @@ int main(int argc, const char **argv) {
         return 1;
     }
 
-    MXSemanticAnalyzer sema = mx_semantic_analyzer_new(src);
+    MXSema sema = mx_semantic_analyzer_new(src);
     sema.tree = parser.tree;
     mx_semantic_analyzer_analyze(&sema);
 
