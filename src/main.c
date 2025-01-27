@@ -49,9 +49,9 @@ int main(int argc, const char **argv) {
         return 1;
     }
 
-    MXSema sema = mx_semantic_analyzer_new(src);
+    MXSema sema = mx_sema_new(src);
     sema.tree = parser.tree;
-    mx_semantic_analyzer_analyze(&sema);
+    mx_sema_analyze(&sema);
 
     const char *c_code = "";
     printf("%s\n", c_code);

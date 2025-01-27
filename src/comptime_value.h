@@ -219,11 +219,11 @@ struct MXComptimeValue {
     };
 };
 
-typedef struct ComptimeEnv {
-    struct ComptimeEnv *parent;
+typedef struct MXComptimeEnv {
+    struct MXComptimeEnv *parent;
     HashMap *members;
-} ComptimeEnv;
+} MXComptimeEnv;
 
-ComptimeEnv *comptime_env_new(Arena *a, ComptimeEnv *parent);
+MXComptimeEnv *mx_comptime_env_new(Arena *a, MXComptimeEnv *parent);
 
 #endif // COMPTIME_VALUE_H

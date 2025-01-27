@@ -1,8 +1,8 @@
 #ifndef SEMA_H
 #define SEMA_H
 
-#include "parser.h"
 #include "comptime_value.h"
+#include "parser.h"
 #include <tree_sitter/api.h>
 
 typedef struct {
@@ -12,8 +12,8 @@ typedef struct {
     TSTree *tree;
 } MXSema;
 
-MXSema mx_semantic_analyzer_new(const char *src);
+MXSema mx_sema_new(const char *src);
 
-void mx_semantic_analyzer_analyze(MXSema *self);
+void mx_sema_analyze(MXSema *self);
 
 #endif

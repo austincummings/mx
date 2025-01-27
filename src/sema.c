@@ -45,7 +45,7 @@ static MXComptimeValue comptime_eval_module(MXSema *sema, TSNode node) {
     assert(sema != NULL);
     assert(!ts_node_is_null(node));
 
-    ComptimeEnv *env = comptime_env_new(&sema->a, NULL);
+    MXComptimeEnv *env = mx_comptime_env_new(&sema->a, NULL);
     assert(env != NULL);
 
     MXComptimeValueList children_values = {0};
@@ -210,14 +210,14 @@ static MXComptimeValue comptime_eval(MXSema *sema) {
     return (MXComptimeValue){0};
 }
 
-ComptimeEnv *comptime_env_new(Arena *a, ComptimeEnv *parent) {
-    ComptimeEnv *self = arena_alloc_struct(a, ComptimeEnv);
+MXComptimeEnv *mx_comptime_env_new(Arena *a, MXComptimeEnv *parent) {
+    MXComptimeEnv *self = arena_alloc_struct(a, MXComptimeEnv);
     self->parent = parent;
     self->members = hashmap_init(a);
     return self;
 }
 
-MXSema mx_semantic_analyzer_new(const char *src) {
+MXSema mx_sema_new(const char *src) {
     MXSema self = {0};
 
     self.a = (Arena){0};
@@ -228,7 +228,7 @@ MXSema mx_semantic_analyzer_new(const char *src) {
     return self;
 }
 
-void mx_semantic_analyzer_analyze(MXSema *self) {
+void mx_sema_analyze(MXSema *self) {
     assert(self != NULL);
     comptime_eval(self);
 }
