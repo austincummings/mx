@@ -11,10 +11,6 @@
           {
             "type": "SYMBOL",
             "name": "_decl"
-          },
-          {
-            "type": "SYMBOL",
-            "name": "_stmt"
           }
         ]
       }

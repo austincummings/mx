@@ -30,7 +30,7 @@ module.exports = grammar({
   conflicts: $ => [],
 
   rules: {
-    module: $ => repeat(choice($._decl, $._stmt)),
+    module: $ => repeat(choice($._decl)),
 
     // Declarations
 

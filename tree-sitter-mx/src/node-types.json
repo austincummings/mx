@@ -1116,14 +1116,6 @@
       "required": false,
       "types": [
         {
-          "type": "assign_stmt",
-          "named": true
-        },
-        {
-          "type": "break_stmt",
-          "named": true
-        },
-        {
           "type": "comptime_fn_decl",
           "named": true
         },
@@ -1132,27 +1124,7 @@
           "named": true
         },
         {
-          "type": "continue_stmt",
-          "named": true
-        },
-        {
-          "type": "expr_stmt",
-          "named": true
-        },
-        {
           "type": "fn_decl",
-          "named": true
-        },
-        {
-          "type": "if_stmt",
-          "named": true
-        },
-        {
-          "type": "loop_stmt",
-          "named": true
-        },
-        {
-          "type": "return_stmt",
           "named": true
         },
         {
