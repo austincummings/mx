@@ -47,9 +47,10 @@ static void error(MXSema *sema, const char *msg, TSNode node) {
     // fprintf(stderr, "\033[0m\n");
 }
 
-static MXComptimeEnv *open_env(MXSema *sema, MXComptimeEnv *parent) {
+static MXComptimeEnv *open_env(MXSema *sema, MXComptimeEnv *parent,
+                               TSNode node) {
     assert(sema != NULL);
-    MXComptimeEnv *env = mx_comptime_env_new(&sema->a, parent);
+    MXComptimeEnv *env = mx_comptime_env_new(&sema->a, parent, node);
     assert(env != NULL);
     arraylist_add(&sema->a, &sema->envs, env);
     return env;
@@ -60,7 +61,7 @@ static void bind_module(MXSema *sema, TSNode node, MXComptimeEnv *env) {
     assert(!ts_node_is_null(node));
     assert(env == NULL); // env should be null for the module node
 
-    env = open_env(sema, NULL);
+    env = open_env(sema, NULL, node);
     assert(env != NULL);
 
     HashMap *query_results = ts_node_query(&sema->a, node, tree_sitter_mx(),
@@ -68,7 +69,7 @@ static void bind_module(MXSema *sema, TSNode node, MXComptimeEnv *env) {
                                            // "    (struct_decl)"
                                            "    (fn_decl)"
                                            "    (const_decl)"
-                                           // "    (var_decl)"
+                                           "    (var_decl)"
                                            // "    (expr_stmt)"
                                            // "    (break_stmt)"
                                            // "    (continue_stmt)"
@@ -77,7 +78,8 @@ static void bind_module(MXSema *sema, TSNode node, MXComptimeEnv *env) {
                                            // "    (loop_stmt)"
                                            // "    (for_stmt)"
                                            // "    (assign_stmt)"
-                                           "] @children)");
+                                           "] @children)",
+                                           true);
     if (ts_query_has_capture(query_results, "children")) {
         TSNodeList *children = ts_query_nodes(query_results, "children");
 
@@ -87,7 +89,7 @@ static void bind_module(MXSema *sema, TSNode node, MXComptimeEnv *env) {
         }
     }
 
-    mx_comptime_env_dump(env, 0, true);
+    env = NULL;
 }
 
 static void bind_fn_decl(MXSema *sema, TSNode node, MXComptimeEnv *env) {
@@ -101,7 +103,8 @@ static void bind_fn_decl(MXSema *sema, TSNode node, MXComptimeEnv *env) {
                       "  name: (_) @name"
                       "  comptime_parameters: (_)? @comptime_params"
                       "  parameters: (_)? @params"
-                      "  body: (_) @body)");
+                      "  body: (_) @body)",
+                      true);
     assert(query_results != NULL);
 
     TSNode name_node = ts_query_first_node(query_results, "name");
@@ -114,8 +117,7 @@ static void bind_fn_decl(MXSema *sema, TSNode node, MXComptimeEnv *env) {
     }
 
     // Introduce a new environment for the function params
-    MXComptimeEnv *fn_env = open_env(sema, env);
-    assert(fn_env != NULL);
+    env = open_env(sema, env, node);
 
     // Bind the comptime parameters
     if (ts_query_has_capture(query_results, "comptime_params")) {
@@ -130,8 +132,11 @@ static void bind_fn_decl(MXSema *sema, TSNode node, MXComptimeEnv *env) {
     // Bind the body
     TSNode body_node = ts_query_first_node(query_results, "body");
     if (!ts_node_is_null(body_node)) {
-        bind_node(sema, body_node, fn_env);
+        bind_node(sema, body_node, env);
     }
+
+    // Restore the parent environment
+    env = env->parent;
 }
 
 static void bind_var_decl(MXSema *sema, TSNode node, MXComptimeEnv *env) {
@@ -143,7 +148,8 @@ static void bind_var_decl(MXSema *sema, TSNode node, MXComptimeEnv *env) {
                                            "(var_decl"
                                            "  name: (_) @name"
                                            "  type: (_)? @type"
-                                           "  value: (_) @value)");
+                                           "  value: (_) @value)",
+                                           true);
     assert(query_results != NULL);
 
     TSNode name_node = ts_query_first_node(query_results, "name");
@@ -160,6 +166,7 @@ static void bind_struct_decl(MXSema *sema, TSNode node, MXComptimeEnv *env) {
     assert(sema != NULL);
     assert(!ts_node_is_null(node));
     assert(env != NULL);
+    todo("struct_decl\n");
 }
 
 static void bind_const_decl(MXSema *sema, TSNode node, MXComptimeEnv *env) {
@@ -171,7 +178,8 @@ static void bind_const_decl(MXSema *sema, TSNode node, MXComptimeEnv *env) {
                                            "(const_decl"
                                            "  name: (_) @name"
                                            "  type: (_)? @type"
-                                           "  value: (_) @value)");
+                                           "  value: (_) @value)",
+                                           true);
     assert(query_results != NULL);
 
     TSNode name_node = ts_query_first_node(query_results, "name");
@@ -197,7 +205,8 @@ static void bind_comptime_expr(MXSema *sema, TSNode node, MXComptimeEnv *env) {
 
     HashMap *query_results = ts_node_query(&sema->a, node, tree_sitter_mx(),
                                            "(comptime_expr"
-                                           "  expr: (_) @expr)");
+                                           "  expr: (_) @expr)",
+                                           true);
     assert(query_results != NULL);
     TSNode expr_node = ts_query_first_node(query_results, "expr");
     assert(!ts_node_is_null(expr_node));
@@ -215,7 +224,8 @@ static void bind_comptime_call_expr(MXSema *sema, TSNode node,
         ts_node_query(&sema->a, node, tree_sitter_mx(),
                       "(comptime_call_expr"
                       "  callee: (_) @callee"
-                      "  comptime_arguments: (expr_list (_) @comptime_args))");
+                      "  comptime_arguments: (expr_list (_) @comptime_args))",
+                      true);
     assert(query_results != NULL);
     TSNode callee_node = ts_query_first_node(query_results, "callee");
     assert(!ts_node_is_null(callee_node));
@@ -240,10 +250,10 @@ static void bind_block(MXSema *sema, TSNode node, MXComptimeEnv *env) {
     assert(env != NULL);
 
     // Introduce a new environment for the block
-    MXComptimeEnv *block_env = mx_comptime_env_new(&sema->a, env);
+    env = open_env(sema, env, node);
 
     HashMap *query_results = ts_node_query(&sema->a, node, tree_sitter_mx(),
-                                           "(block (_)* @children)");
+                                           "(block (_) @children)", true);
     assert(query_results != NULL);
 
     if (ts_query_has_capture(query_results, "children")) {
@@ -251,11 +261,14 @@ static void bind_block(MXSema *sema, TSNode node, MXComptimeEnv *env) {
 
         for (size_t i = 0; i < children->count; i++) {
             TSNode child = children->nodes[i];
-            bind_node(sema, child, block_env);
+            bind_node(sema, child, env);
         }
     }
 
-    mx_comptime_env_dump(block_env, 0, true);
+    mx_comptime_env_dump(env, 0, true, sema->src);
+
+    // Restore the parent environment
+    env = env->parent;
 }
 
 static void bind_return_stmt(MXSema *sema, TSNode node, MXComptimeEnv *env) {
@@ -265,12 +278,41 @@ static void bind_return_stmt(MXSema *sema, TSNode node, MXComptimeEnv *env) {
 
     HashMap *query_results = ts_node_query(&sema->a, node, tree_sitter_mx(),
                                            "(return_stmt"
-                                           "  expr: (_) @expr)");
+                                           "  expr: (_) @expr)",
+                                           true);
     assert(query_results != NULL);
 
     TSNode expr_node = ts_query_first_node(query_results, "expr");
     if (!ts_node_is_null(expr_node)) {
         bind_node(sema, expr_node, env);
+    }
+}
+
+static void bind_if_stmt(MXSema *sema, TSNode node, MXComptimeEnv *env) {
+    assert(sema != NULL);
+    assert(!ts_node_is_null(node));
+    assert(env != NULL);
+
+    HashMap *query_results = ts_node_query(&sema->a, node, tree_sitter_mx(),
+                                           "(if_stmt"
+                                           "  condition: (_) @condition"
+                                           "  then: (_) @then"
+                                           "  else: (_)? @else)",
+                                           true);
+    assert(query_results != NULL);
+
+    TSNode condition_node = ts_query_first_node(query_results, "condition");
+    assert(!ts_node_is_null(condition_node));
+    bind_node(sema, condition_node, env);
+
+    TSNode then_node = ts_query_first_node(query_results, "then");
+    assert(!ts_node_is_null(then_node));
+    bind_node(sema, then_node, env);
+
+    if (ts_query_has_capture(query_results, "else")) {
+        TSNode else_node = ts_query_first_node(query_results, "else");
+        assert(!ts_node_is_null(else_node));
+        bind_node(sema, else_node, env);
     }
 }
 
@@ -310,10 +352,14 @@ static void bind_node(MXSema *sema, TSNode node, MXComptimeEnv *env) {
     } else if (strcmp(node_type, "return_stmt") == 0) {
         bind_return_stmt(sema, node, env);
         return;
+    } else if (strcmp(node_type, "if_stmt") == 0) {
+        bind_if_stmt(sema, node, env);
+        return;
     } else if (strcmp(node_type, "identifier") == 0 ||
                strcmp(node_type, "int_literal") == 0 ||
                strcmp(node_type, "bool_literal") == 0 ||
-               strcmp(node_type, "string_literal") == 0) {
+               strcmp(node_type, "string_literal") == 0 ||
+               strcmp(node_type, "line_comment") == 0) {
         // noop since none of these nodes introduce new bindings
         return;
     } else {

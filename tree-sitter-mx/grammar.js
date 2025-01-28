@@ -193,7 +193,7 @@ module.exports = grammar({
 
     block: $ => seq(
       "{",
-      field("stmts", repeat(choice($._stmt, $._decl))),
+      repeat(choice($._stmt, $._decl)),
       "}",
     ),
 

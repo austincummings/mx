@@ -232,11 +232,13 @@ typedef struct MXComptimeEnv {
     Arena *a;
     struct MXComptimeEnv *parent;
     HashMap *members;
+    TSNode node;
 } MXComptimeEnv;
 
 typedef ArrayList(MXComptimeEnv *) MXComptimeEnvRefList;
 
-MXComptimeEnv *mx_comptime_env_new(Arena *a, MXComptimeEnv *parent);
+MXComptimeEnv *mx_comptime_env_new(Arena *a, MXComptimeEnv *parent,
+                                   TSNode node);
 
 bool mx_comptime_env_declare(MXComptimeEnv *env, const char *name, TSNode node);
 
@@ -248,6 +250,7 @@ bool mx_comptime_env_set(MXComptimeEnv *env, const char *name,
 bool mx_comptime_env_contains(MXComptimeEnv *env, const char *name,
                               bool recurse);
 
-void mx_comptime_env_dump(MXComptimeEnv *env, int indent, bool show_nodes);
+void mx_comptime_env_dump(MXComptimeEnv *env, int indent, bool show_nodes,
+                          const char *src);
 
 #endif // COMPTIME_VALUE_H

@@ -1474,23 +1474,19 @@
           "value": "{"
         },
         {
-          "type": "FIELD",
-          "name": "stmts",
+          "type": "REPEAT",
           "content": {
-            "type": "REPEAT",
-            "content": {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "_stmt"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "_decl"
-                }
-              ]
-            }
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "_stmt"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_decl"
+              }
+            ]
           }
         },
         {

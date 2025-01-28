@@ -29,7 +29,7 @@ bool ts_node_matches(TSNode node, TSLanguage *language,
 
 /// Returns a HashMap[[c_str, TSNodeList*]]
 HashMap *ts_node_query(Arena *a, TSNode node, const TSLanguage *language,
-                       const char *query_string);
+                       const char *query_string, bool direct_children_only);
 
 TSNodeList *ts_query_nodes(HashMap *query_results, char *capture_name);
 

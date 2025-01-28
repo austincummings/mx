@@ -1,5 +1,7 @@
-fn main(): ZERO {
-    var a: 1 = 1;
-    const ZERO: 0 = 0;
+fn fn(argc: c_type["int"]): ZERO {
+    var main_var: 1 = 1;
+    if true {
+        var if_var = 1;
+    }
     return ZERO;
 }

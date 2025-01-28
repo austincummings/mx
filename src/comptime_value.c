@@ -1,6 +1,7 @@
 #include "comptime_value.h"
 #include "debug.h"
 #include "map.h"
+#include "ts_ext.h"
 #include <tree_sitter/api.h>
 
 const char *MXComptimeValueKindString[MX_COMPTIME_VALUE_ENUM_COUNT] = {
@@ -14,11 +15,13 @@ const char *MXComptimeValueKindString[MX_COMPTIME_VALUE_ENUM_COUNT] = {
     "member_expr",    "c_type",        "c_value",
 };
 
-MXComptimeEnv *mx_comptime_env_new(Arena *a, MXComptimeEnv *parent) {
+MXComptimeEnv *mx_comptime_env_new(Arena *a, MXComptimeEnv *parent,
+                                   TSNode node) {
     MXComptimeEnv *self = arena_alloc_struct(a, MXComptimeEnv);
     self->a = a;
     self->parent = parent;
     self->members = hashmap_init(a);
+    self->node = node;
     return self;
 }
 
@@ -95,10 +98,12 @@ bool mx_comptime_env_contains(MXComptimeEnv *env, const char *name,
     return false;
 }
 
-void mx_comptime_env_dump(MXComptimeEnv *env, int indent, bool show_nodes) {
+void mx_comptime_env_dump(MXComptimeEnv *env, int indent, bool show_nodes,
+                          const char *src) {
     assert(env != NULL);
 
-    debug("%*sEnv:\n", indent, "");
+    const char *node_line = ts_node_line_text(env->a, env->node, src);
+    debug("%*senv(%p): %s\n", indent, "", env, node_line);
 
     if (env->members->size == 0) {
         debug("%*s<empty>\n", indent + 2, "");
@@ -111,14 +116,15 @@ void mx_comptime_env_dump(MXComptimeEnv *env, int indent, bool show_nodes) {
         const char *kind = MXComptimeValueKindString[binding->value.kind];
         if (show_nodes && !ts_node_is_null(binding->node)) {
             const char *node_type = ts_node_type(binding->node);
-            debug("%*s%s = %s, node type: %s(%p)\n", indent + 2, "", key, kind, node_type,
+            debug("%*s%s = %s %s(%p)\n", indent + 2, "", key, kind, node_type,
                   binding->node.id);
+
         } else {
             debug("%*s%s = %s\n", indent + 2, "", key, kind);
         }
     }
 
     if (env->parent != NULL) {
-        mx_comptime_env_dump(env->parent, indent + 4, show_nodes);
+        mx_comptime_env_dump(env->parent, indent + 4, show_nodes, src);
     }
 }

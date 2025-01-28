@@ -46,7 +46,7 @@ char *ts_node_line_text(Arena *a, TSNode node, const char *src) {
         start--;
     }
     // Find the end of the line
-    uint32_t end = ts_node_end_byte(node);
+    uint32_t end = ts_node_start_byte(node);
     while (src[end] != '\0' && src[end] != '\n') {
         end++;
     }
@@ -136,7 +136,7 @@ void ts_node_list_add(Arena *a, TSNodeList *list, TSNode node) {
 }
 
 HashMap *ts_node_query(Arena *a, TSNode node, const TSLanguage *language,
-                       const char *query_string) {
+                       const char *query_string, bool direct_children_only) {
     // Create the TSQuery from the query string
     uint32_t error_offset;
     TSQueryError error_type;
@@ -182,7 +182,13 @@ HashMap *ts_node_query(Arena *a, TSNode node, const TSLanguage *language,
             }
 
             // Add the captured node to the list
-            ts_node_list_add(a, node_list, captured_node);
+            if (direct_children_only) {
+                if (ts_node_parent(captured_node).id == node.id) {
+                    ts_node_list_add(a, node_list, captured_node);
+                }
+            } else {
+                ts_node_list_add(a, node_list, captured_node);
+            }
         }
     }
 
