@@ -1,6 +1,6 @@
 const ZERO: 0 = 0;
 
-fn function[T: 0](arg: T): ZERO {
+fn main[T: 0](arg: T): ZERO {
     {
         var v0: T = comptime[0];
         return v0;

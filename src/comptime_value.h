@@ -245,6 +245,9 @@ bool mx_comptime_env_declare(MXComptimeEnv *env, const char *name, TSNode node);
 bool mx_comptime_env_set(MXComptimeEnv *env, const char *name,
                          MXComptimeValue value);
 
+MXComptimeBinding *mx_comptime_env_get(MXComptimeEnv *env, const char *name,
+                                       bool recurse);
+
 /// Check if the given name is declared in the current env. If recurse is true
 /// then we will also check the parent envs.
 bool mx_comptime_env_contains(MXComptimeEnv *env, const char *name,

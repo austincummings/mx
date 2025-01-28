@@ -82,6 +82,28 @@ bool mx_comptime_env_set(MXComptimeEnv *env, const char *name,
     abort();
 }
 
+MXComptimeBinding *mx_comptime_env_get(MXComptimeEnv *env, const char *name,
+                                       bool recurse) {
+    assert(env != NULL);
+    assert(name != NULL);
+
+    MXComptimeEnv *decl_env = env;
+    while (decl_env != NULL) {
+        MXComptimeBinding *binding = hashmap_get(decl_env->members, name);
+        if (binding != NULL) {
+            return binding;
+        }
+
+        if (!recurse) {
+            break;
+        }
+
+        decl_env = decl_env->parent;
+    }
+
+    return NULL;
+}
+
 bool mx_comptime_env_contains(MXComptimeEnv *env, const char *name,
                               bool recurse) {
     assert(env != NULL);

@@ -260,8 +260,6 @@ static void bind_block(MXSema *sema, TSNode node, MXComptimeEnv *env) {
         }
     }
 
-    mx_comptime_env_dump(env, 0, true, sema->src);
-
     // Restore the parent environment
     env = env->parent;
 }
@@ -418,6 +416,81 @@ static void bind(MXSema *sema) {
     bind_node(sema, root_node, NULL);
 }
 
+static MXComptimeValue comptime_eval_node(MXSema *sema, MXComptimeEnv *env,
+                                          TSNode node) {
+
+    assert(sema != NULL);
+    assert(env != NULL);
+    assert(!ts_node_is_null(node));
+
+    todo("comptime evaluate node\n");
+}
+
+static void comptime_eval_module_node(MXSema *sema, MXComptimeEnv *env,
+                                      TSNode node) {
+    assert(sema != NULL);
+    assert(env == NULL); // env should be null for the module node
+    assert(!ts_node_is_null(node));
+
+    HashMap *query_results = ts_node_query(&sema->a, node, tree_sitter_mx(),
+                                           "(module (_) @children)", true);
+    assert(query_results != NULL);
+
+    if (ts_query_has_capture(query_results, "children")) {
+        TSNodeList *children = ts_query_nodes(query_results, "children");
+
+        for (size_t i = 0; i < children->count; i++) {
+            TSNode child = children->nodes[i];
+            comptime_eval_node(sema, env, child);
+        }
+    }
+}
+
+static void comptime_eval_no_return_node(MXSema *sema, MXComptimeEnv *env,
+                                         TSNode node) {
+    assert(sema != NULL);
+    // env might be null for the module node so we don't assert it here
+    assert(!ts_node_is_null(node));
+
+    const char *node_type = ts_node_type(node);
+    assert(node_type != NULL);
+
+    if (strcmp(node_type, "module") == 0) {
+        comptime_eval_module_node(sema, env, node);
+    } else {
+        debug("unhandled node type in comptime_eval_no_return_node: %s\n",
+              node_type);
+        abort();
+    }
+}
+
+static void comptime_eval(MXSema *sema) {
+    assert(sema != NULL);
+    // Find the entry point
+    MXComptimeEnv *entry_point_env = NULL;
+    for (size_t i = 0; i < sema->envs.size; i++) {
+        // Check if the environment contains a function named "main"
+        MXComptimeEnv *env = sema->envs.data[i];
+        if (mx_comptime_env_contains(env, "main", false)) {
+            entry_point_env = env;
+            break;
+        }
+    }
+
+    if (entry_point_env == NULL) {
+        error(sema, "No entry point found", ts_tree_root_node(sema->tree));
+        return;
+    }
+
+    // Select the main function
+    MXComptimeBinding *main_fn_ref =
+        mx_comptime_env_get(entry_point_env, "main", false);
+    assert(main_fn_ref != NULL);
+
+    // Comptime evaluate the main function node
+    todo("comptime evaluate the main function node\n");
+}
+
 MXSema mx_sema_new(const char *src) {
     MXSema self = {0};
 
@@ -435,4 +508,5 @@ MXSema mx_sema_new(const char *src) {
 void mx_sema_analyze(MXSema *self) {
     assert(self != NULL);
     bind(self);
+    comptime_eval(self);
 }
