@@ -35,6 +35,31 @@ char *ts_node_text(Arena *a, const TSNode node, const char *src) {
     return text;
 }
 
+/// Returns the text of the line that the node is on
+char *ts_node_line_text(Arena *a, TSNode node, const char *src) {
+    assert(a != NULL);
+    assert(!ts_node_is_null(node));
+    assert(src != NULL);
+    // Find the start of the line
+    uint32_t start = ts_node_start_byte(node);
+    while (start > 0 && src[start - 1] != '\n') {
+        start--;
+    }
+    // Find the end of the line
+    uint32_t end = ts_node_end_byte(node);
+    while (src[end] != '\0' && src[end] != '\n') {
+        end++;
+    }
+    // Calculate the size of the line
+    uint32_t size = end - start;
+    // Allocate memory in the arena for the line
+    char *line = arena_alloc(a, size);
+    // Copy the line into the buffer
+    memcpy(line, src + start, size);
+    line[size] = '\0';
+    return line;
+}
+
 char *ts_node_id_to_string(Arena *a, uintptr_t node_id) {
     // Pre-calculate the size needed for the string representation
     size_t s = snprintf(NULL, 0, "%" PRIuPTR, node_id) + 1;

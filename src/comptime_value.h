@@ -3,6 +3,7 @@
 
 #include "array_list.h"
 #include "map.h"
+#include <tree_sitter/api.h>
 
 typedef enum {
     C_TYPE_UNKNOWN,
@@ -65,7 +66,9 @@ typedef enum {
 
     // C Types
     MX_COMPTIME_VALUE_C_TYPE,
-    MX_COMPTIME_VALUE_C_VALUE
+    MX_COMPTIME_VALUE_C_VALUE,
+
+    MX_COMPTIME_VALUE_ENUM_COUNT
 } MXComptimeValueKind;
 
 typedef struct MXComptimeValue MXComptimeValue;
@@ -222,18 +225,29 @@ struct MXComptimeValue {
 typedef struct {
     const char *name;
     MXComptimeValue value;
+    TSNode node;
 } MXComptimeBinding;
 
 typedef struct MXComptimeEnv {
+    Arena *a;
     struct MXComptimeEnv *parent;
     HashMap *members;
 } MXComptimeEnv;
 
+typedef ArrayList(MXComptimeEnv *) MXComptimeEnvRefList;
+
 MXComptimeEnv *mx_comptime_env_new(Arena *a, MXComptimeEnv *parent);
 
-void mx_comptime_env_set(MXComptimeEnv *env, const char *name,
-                         MXComptimeBinding binding);
+bool mx_comptime_env_declare(MXComptimeEnv *env, const char *name, TSNode node);
 
-bool mx_comptime_env_contains(MXComptimeEnv *env, const char *name);
+bool mx_comptime_env_set(MXComptimeEnv *env, const char *name,
+                         MXComptimeValue value);
+
+/// Check if the given name is declared in the current env. If recurse is true
+/// then we will also check the parent envs.
+bool mx_comptime_env_contains(MXComptimeEnv *env, const char *name,
+                              bool recurse);
+
+void mx_comptime_env_dump(MXComptimeEnv *env, int indent, bool show_nodes);
 
 #endif // COMPTIME_VALUE_H

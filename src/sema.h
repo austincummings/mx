@@ -7,8 +7,8 @@
 
 typedef struct {
     Arena a;
+    MXComptimeEnvRefList envs;
     const char *src;
-
     TSTree *tree;
 } MXSema;
 
