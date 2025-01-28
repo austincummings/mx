@@ -21,7 +21,7 @@ typedef enum {
 } CType;
 
 typedef enum {
-    MX_COMPTIME_VALUE_EMPTY,
+    MX_COMPTIME_VALUE_UNDEFINED,
     // Code Comptime Values
     // Declarations
     MX_COMPTIME_VALUE_MODULE,      // <list of stmts and decls>
@@ -219,11 +219,21 @@ struct MXComptimeValue {
     };
 };
 
+typedef struct {
+    const char *name;
+    MXComptimeValue value;
+} MXComptimeBinding;
+
 typedef struct MXComptimeEnv {
     struct MXComptimeEnv *parent;
     HashMap *members;
 } MXComptimeEnv;
 
 MXComptimeEnv *mx_comptime_env_new(Arena *a, MXComptimeEnv *parent);
+
+void mx_comptime_env_set(MXComptimeEnv *env, const char *name,
+                         MXComptimeBinding binding);
+
+bool mx_comptime_env_contains(MXComptimeEnv *env, const char *name);
 
 #endif // COMPTIME_VALUE_H

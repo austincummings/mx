@@ -127,13 +127,13 @@ static MXComptimeValue comptime_eval_const_decl(MXSema *sema, TSNode node) {
     MXComptimeValue value = comptime_eval_node(sema, value_node);
     debug("static decl value: %d\n", value.kind);
 
-    return (MXComptimeValue){.kind = MX_COMPTIME_VALUE_EMPTY};
+    return (MXComptimeValue){.kind = MX_COMPTIME_VALUE_UNDEFINED};
 }
 
 static MXComptimeValue comptime_eval_expr_stmt(MXSema *sema, TSNode node) {
     assert(sema != NULL);
     assert(!ts_node_is_null(node));
-    return (MXComptimeValue){.kind = MX_COMPTIME_VALUE_EMPTY};
+    return (MXComptimeValue){.kind = MX_COMPTIME_VALUE_UNDEFINED};
 }
 
 static MXComptimeValue comptime_eval_comptime_expr(MXSema *sema, TSNode node) {
@@ -174,7 +174,7 @@ static MXComptimeValue comptime_eval_comptime_call_expr(MXSema *sema,
         debug("C_value\n");
     }
 
-    return (MXComptimeValue){.kind = MX_COMPTIME_VALUE_EMPTY};
+    return (MXComptimeValue){.kind = MX_COMPTIME_VALUE_UNDEFINED};
 }
 
 static MXComptimeValue comptime_eval_node(MXSema *sema, TSNode node) {
@@ -208,13 +208,6 @@ static MXComptimeValue comptime_eval(MXSema *sema) {
     comptime_eval_node(sema, root_node);
 
     return (MXComptimeValue){0};
-}
-
-MXComptimeEnv *mx_comptime_env_new(Arena *a, MXComptimeEnv *parent) {
-    MXComptimeEnv *self = arena_alloc_struct(a, MXComptimeEnv);
-    self->parent = parent;
-    self->members = hashmap_init(a);
-    return self;
 }
 
 MXSema mx_sema_new(const char *src) {
