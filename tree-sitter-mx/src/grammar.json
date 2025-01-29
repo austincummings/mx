@@ -1422,17 +1422,8 @@
             "type": "FIELD",
             "name": "callee",
             "content": {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "comptime_call_expr"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "_expr"
-                }
-              ]
+              "type": "SYMBOL",
+              "name": "comptime_expr"
             }
           },
           {
@@ -1810,7 +1801,12 @@
       "name": "line_comment"
     }
   ],
-  "conflicts": [],
+  "conflicts": [
+    [
+      "_expr",
+      "comptime_expr"
+    ]
+  ],
   "precedences": [],
   "externals": [],
   "inline": [],

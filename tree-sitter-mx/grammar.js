@@ -27,7 +27,7 @@ module.exports = grammar({
     $.line_comment,
   ],
 
-  conflicts: $ => [],
+  conflicts: $ => [[$._expr, $.comptime_expr]],
 
   rules: {
     module: $ => repeat(choice($._decl)),
@@ -185,7 +185,7 @@ module.exports = grammar({
     )),
 
     call_expr: $ => prec(PREC.call, seq(
-      field("callee", choice($.comptime_call_expr, $._expr)),
+      field("callee", $.comptime_expr),
       "(",
       field("arguments", optional($.expr_list)),
       ")",

@@ -209,3 +209,11 @@ bool ts_query_has_capture(HashMap *query_results, char *capture_name) {
     assert(capture_name != NULL);
     return hashmap_get(query_results, capture_name) != NULL;
 }
+
+const TSLanguage *tree_sitter_mx(void);
+
+HashMap *query(Arena *a, TSNode node, const char *query_string,
+               bool direct_children_only) {
+    return ts_node_query(a, node, tree_sitter_mx(), query_string,
+                         direct_children_only);
+}
