@@ -1,0 +1,9 @@
+const ZERO = 0;
+
+fn main(): ZERO {
+    return zero[];
+}
+
+comptime fn zero[]: 0 {
+    return 0;
+}
