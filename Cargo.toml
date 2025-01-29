@@ -1,0 +1,8 @@
+[workspace]
+resolver = "2"
+members = ["cli", "mx", "tree-sitter-mx"]
+
+[workspace.dependencies]
+streaming-iterator = "0.1.9"
+tree-sitter = "0.24.0"
+tree-sitter-mx = { path = "tree-sitter-mx" }

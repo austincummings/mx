@@ -1,0 +1,23 @@
+[package]
+name = "mx-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "mx"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1
+strip = true
+panic = 'abort'
+debug = false
+incremental = false
+
+[dependencies]
+streaming-iterator.workspace = true
+tokio = { version = "1", features = ["full"] }
+tower-lsp = "0.20.0"
+mx = { path = "../mx" }
