@@ -6,13 +6,10 @@
 #include <tree_sitter/api.h>
 
 #include "arena.h"
+#include "array_list.h"
 #include "map.h"
 
-typedef struct TSNodeList {
-    TSNode *nodes;
-    size_t count;
-    size_t capacity;
-} TSNodeList;
+typedef ArrayList(TSNode) TSNodeList;
 
 void ts_node_print(Arena *a, TSNode node, const char *src);
 

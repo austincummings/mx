@@ -1,4 +1,5 @@
 #include "ts_ext.h"
+#include "array_list.h"
 #include "map.h"
 #include <tree_sitter/api.h>
 
@@ -115,26 +116,6 @@ bool ts_node_matches(TSNode node, TSLanguage *language,
     return has_match;
 }
 
-// Helper function to initialize a TSNodeList
-void ts_node_list_init(Arena *a, TSNodeList *list, size_t initial_capacity) {
-    list->nodes = (TSNode *)arena_alloc(a, initial_capacity * sizeof(TSNode));
-    list->count = 0;
-    list->capacity = initial_capacity;
-}
-
-// Helper function to add a node to TSNodeList
-void ts_node_list_add(Arena *a, TSNodeList *list, TSNode node) {
-    if (list->count >= list->capacity) {
-        size_t new_capacity = list->capacity * 2;
-        TSNode *new_nodes =
-            (TSNode *)arena_alloc(a, new_capacity * sizeof(TSNode));
-        memcpy(new_nodes, list->nodes, list->count * sizeof(TSNode));
-        list->nodes = new_nodes;
-        list->capacity = new_capacity;
-    }
-    list->nodes[list->count++] = node;
-}
-
 HashMap *ts_node_query(Arena *a, TSNode node, const TSLanguage *language,
                        const char *query_string, bool direct_children_only) {
     // Create the TSQuery from the query string
@@ -177,17 +158,17 @@ HashMap *ts_node_query(Arena *a, TSNode node, const TSLanguage *language,
             if (!node_list) {
                 // If not present, create a new TSNodeList
                 node_list = (TSNodeList *)arena_alloc(a, sizeof(TSNodeList));
-                ts_node_list_init(a, node_list, 10);
+                arraylist_init(a, node_list, 10);
                 hashmap_set(a, capture_map, capture_name, (void *)node_list);
             }
 
             // Add the captured node to the list
             if (direct_children_only) {
                 if (ts_node_parent(captured_node).id == node.id) {
-                    ts_node_list_add(a, node_list, captured_node);
+                    arraylist_add(a, node_list, captured_node);
                 }
             } else {
-                ts_node_list_add(a, node_list, captured_node);
+                arraylist_add(a, node_list, captured_node);
             }
         }
     }
@@ -219,7 +200,7 @@ TSNode ts_query_first_node(HashMap *query_results, char *capture_name) {
                 capture_name);
         return (TSNode){0};
     }
-    TSNode node = list->nodes[0];
+    TSNode node = list->data[0];
     return node;
 }
 

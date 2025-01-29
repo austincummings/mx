@@ -5,14 +5,17 @@
 #include <tree_sitter/api.h>
 
 const char *MXComptimeValueKindString[MX_COMPTIME_VALUE_ENUM_COUNT] = {
-    "undefined",      "module",        "fn",
-    "var_decl",       "struct",        "expr_stmt",
-    "break",          "continue_stmt", "return",
-    "if_stmt",        "loop",          "for_stmt",
-    "assign",         "int_literal",   "float_literal",
-    "string_literal", "bool_literal",  "list_literal",
-    "map_literal",    "identifier",    "call_expr",
-    "member_expr",    "c_type",        "c_value",
+    "MX_COMPTIME_VALUE_UNDEFINED",
+    "MX_COMPTIME_VALUE_FN_DECL",
+    "MX_COMPTIME_VALUE_STRUCT_DECL",
+    "MX_COMPTIME_VALUE_INT_LITERAL",
+    "MX_COMPTIME_VALUE_FLOAT_LITERAL",
+    "MX_COMPTIME_VALUE_STRING_LITERAL",
+    "MX_COMPTIME_VALUE_BOOL_LITERAL",
+    "MX_COMPTIME_VALUE_IDENTIFIER",
+    "MX_COMPTIME_VALUE_FN",
+    "MX_COMPTIME_VALUE_C_TYPE",
+    "MX_COMPTIME_VALUE_C_VALUE",
 };
 
 MXComptimeEnv *mx_comptime_env_new(Arena *a, MXComptimeEnv *parent,
@@ -149,4 +152,90 @@ void mx_comptime_env_dump(MXComptimeEnv *env, int indent, bool show_nodes,
     if (env->parent != NULL) {
         mx_comptime_env_dump(env->parent, indent + 4, show_nodes, src);
     }
+}
+
+MXComptimeValue mx_comptime_undefined() {
+    return (MXComptimeValue){
+        .kind = MX_COMPTIME_VALUE_UNDEFINED,
+    };
+}
+
+MXComptimeValue mx_comptime_fn_decl(const char *name,
+                                    TSNodeList *comptime_params,
+                                    TSNodeList *params, TSNode return_type,
+                                    TSNode body) {
+    return (MXComptimeValue){
+        .kind = MX_COMPTIME_VALUE_FN_DECL,
+        .fn_decl =
+            (MXComptimeValueFnDecl){
+                .name = name,
+                .comptime_params = comptime_params,
+                .params = params,
+                .return_type = return_type,
+                .body = body,
+            },
+    };
+}
+
+MXComptimeValue mx_comptime_struct_decl(const char *name) {
+    return (MXComptimeValue){
+        .kind = MX_COMPTIME_VALUE_STRUCT_DECL,
+        .struct_decl = (MXComptimeValueStructDecl){.name = name},
+    };
+}
+
+MXComptimeValue mx_comptime_fn(const char *name) {
+    return (MXComptimeValue){
+        .kind = MX_COMPTIME_VALUE_FN,
+        .fn = (MXComptimeValueFn){.name = name},
+    };
+}
+
+MXComptimeValue mx_comptime_struct(const char *name) {
+    return (MXComptimeValue){
+        .kind = MX_COMPTIME_VALUE_STRUCT,
+        .struct_ = (MXComptimeValueStruct){.name = name},
+    };
+}
+
+MXComptimeValue mx_comptime_int_literal(uint64_t value) {
+    return (MXComptimeValue){
+        .kind = MX_COMPTIME_VALUE_INT_LITERAL,
+        .int_literal = (MXComptimeValueIntLiteral){.int_value = value},
+    };
+}
+
+MXComptimeValue mx_comptime_float_literal(double value) {
+    return (MXComptimeValue){
+        .kind = MX_COMPTIME_VALUE_FLOAT_LITERAL,
+        .float_literal = (MXComptimeValueFloatLiteral){.float_value = value},
+    };
+}
+
+MXComptimeValue mx_comptime_string_literal(const char *value) {
+    return (MXComptimeValue){
+        .kind = MX_COMPTIME_VALUE_STRING_LITERAL,
+        .string_literal = (MXComptimeValueStringLiteral){.string_value = value},
+    };
+}
+
+MXComptimeValue mx_comptime_bool_literal(bool value) {
+    return (MXComptimeValue){
+        .kind = MX_COMPTIME_VALUE_BOOL_LITERAL,
+        .bool_literal = (MXComptimeValueBoolLiteral){.bool_value = value},
+    };
+}
+
+MXComptimeValue mx_comptime_c_type(CType type) {
+    return (MXComptimeValue){
+        .kind = MX_COMPTIME_VALUE_C_TYPE,
+        .c_type = (MXComptimeValueCType){.type = type},
+    };
+}
+
+MXComptimeValue mx_comptime_c_value(CType type, CValue value) {
+    return (MXComptimeValue){
+        .kind = MX_COMPTIME_VALUE_C_VALUE,
+        .c_value = (MXComptimeValueCValue){.type = type, .value = value},
+    };
 }
