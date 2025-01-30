@@ -16,12 +16,6 @@ MXIRNodeList mxir_node_list(Arena *arena) {
     return list;
 }
 
-MXIRNode *mxir_module(Arena *arena, MXIRNodeList fns) {
-    MXIRNode *node = mxir_alloc(arena, MXIR_MODULE);
-    node->module.fns = fns;
-    return node;
-}
-
 MXIRNode *mxir_fn(Arena *arena, const char *name, MXIRNodeList params,
                   MXIRNode *body) {
     MXIRNode *node = mxir_alloc(arena, MXIR_FN);
@@ -171,17 +165,6 @@ static const char *mxir_node_to_sexpr_internal(Arena *a, MXIRNode *node) {
         return append_str(a, "<nil>");
 
     switch (node->kind) {
-    case MXIR_MODULE: {
-        char *sexpr = append_str(a, "(module ");
-        for (size_t i = 0; i < node->module.fns.size; i++) {
-            const char *child =
-                mxir_node_to_sexpr_internal(a, &node->module.fns.data[i]);
-            sexpr = arena_strcat(a, sexpr, (char *)child);
-            sexpr = arena_strcat(a, sexpr, " ");
-        }
-        sexpr = arena_strcat(a, sexpr, ")");
-        return sexpr;
-    }
     case MXIR_FN: {
         char *sexpr = arena_strcat(a, "(fn ", (char *)node->fn.name);
         sexpr = arena_strcat(a, sexpr, " ");

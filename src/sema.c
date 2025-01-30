@@ -435,7 +435,6 @@ MXSema mx_sema_new(const char *src) {
 
 void mx_sema_analyze(MXSema *self) {
     assert(self != NULL);
-    bind(self);
 
     MXIRNodeList fns = mxir_node_list(&self->a);
 
@@ -451,7 +450,8 @@ void mx_sema_analyze(MXSema *self) {
     MXIRNode *fn = mxir_fn(&self->a, "main", mxir_node_list(&self->a), fn_body);
     arraylist_add(&self->a, &fns, *fn);
 
-    MXIRNode *module = mxir_module(&self->a, fns);
-    const char *sexpr = mxir_node_to_sexpr(&self->a, module);
+    const char *sexpr = mxir_node_to_sexpr(&self->a, fn);
     debug("%s\n", sexpr);
+
+    bind(self);
 }

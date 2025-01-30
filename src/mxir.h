@@ -5,7 +5,6 @@
 
 typedef enum {
     // Declarations
-    MXIR_MODULE,
     MXIR_FN,
     MXIR_VAR_DECL,
 
@@ -30,11 +29,6 @@ typedef enum {
 typedef struct MXIRNode MXIRNode;
 
 typedef ArrayList(MXIRNode) MXIRNodeList;
-
-// module { fns: [ ... ] }
-typedef struct {
-    MXIRNodeList fns;
-} MXIRModule;
 
 typedef struct {
     const char *name;
@@ -112,7 +106,6 @@ typedef struct {
 struct MXIRNode {
     MXIRKind kind;
     union {
-        MXIRModule module;
         MXIRFn fn;
         MXIRVarDecl var_decl;
         MXIRIf if_stmt;
@@ -132,7 +125,6 @@ struct MXIRNode {
 };
 
 MXIRNodeList mxir_node_list(Arena *arena);
-MXIRNode *mxir_module(Arena *arena, MXIRNodeList fns);
 MXIRNode *mxir_fn(Arena *arena, const char *name, MXIRNodeList params,
                   MXIRNode *body);
 MXIRNode *mxir_var_decl(Arena *arena, const char *name, MXIRNode *value);

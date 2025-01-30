@@ -3,6 +3,7 @@
 
 #include "arena.h"
 #include "comptime_value.h"
+#include "mxir.h"
 #include <tree_sitter/api.h>
 
 typedef struct {
@@ -10,6 +11,7 @@ typedef struct {
     const char *src;
     TSTree *tree;
     MXComptimeEnvRefList envs;
+    MXIRNodeList fns;
 } MXSema;
 
 MXSema mx_sema_new(const char *src);

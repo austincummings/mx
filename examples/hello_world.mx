@@ -1,17 +1,19 @@
 // MX
-// fn main(p: ref[ComptimeInt]): 0 {
-//     var ret = deref[p];
-//     var addr = addr_of[ret];
-//     if true {
-//         ret = 0;
-//     }
-//     loop {
-//         if false {
-//             continue;
-//         }
-//         break;
-//     }
-//     1;
-//     return ret;
-// }
-fn main(): 0 {}
+fn main(p: ref[ComptimeInt]): 0 {
+    var ret = deref[p]; // ComptimeInt
+    var addr = addr_of[ret]; // ref[ComptimeInt]
+    if true {
+        ret = 0;
+    }
+    loop {
+        if false {
+            continue;
+        }
+        break;
+    }
+    1;
+    return ret;
+}
+
+// Invocation:
+//    main[](addr_of[0]);
