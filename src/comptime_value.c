@@ -4,11 +4,6 @@
 #include "ts_ext.h"
 #include <tree_sitter/api.h>
 
-const char *MXComptimeValueKindString[MX_COMPTIME_VALUE_ENUM_COUNT] = {
-    "undefined", "fn_decl",    "struct_decl", "int",    "float",   "string",
-    "bool",      "identifier", "fn",          "c_type", "c_value",
-};
-
 MXComptimeEnv *mx_comptime_env_new(Arena *a, MXComptimeEnv *parent,
                                    TSNode node) {
     MXComptimeEnv *self = arena_alloc_struct(a, MXComptimeEnv);
@@ -34,46 +29,10 @@ bool mx_comptime_env_declare(MXComptimeEnv *env, const char *name,
 
     MXComptimeBinding *binding = arena_alloc_struct(env->a, MXComptimeBinding);
     binding->name = name;
-    binding->value = (MXComptimeValue){
-        .kind = MX_COMPTIME_VALUE_UNDEFINED,
-    };
     binding->node = node;
     hashmap_set(env->a, env->members, name, binding);
 
     return true;
-}
-
-bool mx_comptime_env_set(MXComptimeEnv *env, const char *name,
-                         MXComptimeValue value) {
-    assert(env != NULL);
-    assert(name != NULL);
-    assert(strlen(name) > 0);
-
-    // First find which environment the name is declared in.
-    MXComptimeEnv *decl_env = env;
-    while (decl_env != NULL) {
-        if (hashmap_get(decl_env->members, name) != NULL) {
-            break;
-        }
-        decl_env = decl_env->parent;
-    }
-
-    // If the name is not declared in any environment then return false.
-    if (decl_env == NULL) {
-        return false;
-    }
-
-    // If the name is declared in the current env then update the value and
-    // return true.
-    MXComptimeBinding *binding = hashmap_get(decl_env->members, name);
-    if (binding != NULL) {
-        binding->value = value;
-        return true;
-    }
-
-    // This is unreachable so we should abort.
-    debug("unreachable\n");
-    abort();
 }
 
 MXComptimeBinding *mx_comptime_env_get(MXComptimeEnv *env, const char *name,
@@ -129,104 +88,17 @@ void mx_comptime_env_dump(MXComptimeEnv *env, int indent, bool show_nodes,
         const char *key = NULL;
         MXComptimeBinding *binding = NULL;
         hashmap_iterator_next(&it, &key, (void **)&binding);
-        const char *kind = MXComptimeValueKindString[binding->value.kind];
         if (show_nodes && !ts_node_is_null(binding->node)) {
             const char *node_type = ts_node_type(binding->node);
-            debug("%*s%s = %s %s(%p)\n", indent + 2, "", key, kind, node_type,
+            debug("%*s%s = %s(%p)\n", indent + 2, "", key, node_type,
                   binding->node.id);
 
         } else {
-            debug("%*s%s = %s\n", indent + 2, "", key, kind);
+            debug("%*s%s\n", indent + 2, "", key);
         }
     }
 
     if (env->parent != NULL) {
         mx_comptime_env_dump(env->parent, indent + 4, show_nodes, src);
     }
-}
-
-MXComptimeValue mx_comptime_undefined() {
-    return (MXComptimeValue){
-        .kind = MX_COMPTIME_VALUE_UNDEFINED,
-    };
-}
-
-MXComptimeValue mx_comptime_fn_decl(const char *name,
-                                    TSNodeList *comptime_params,
-                                    TSNodeList *params, TSNode return_type,
-                                    TSNode body) {
-    return (MXComptimeValue){
-        .kind = MX_COMPTIME_VALUE_FN_DECL,
-        .as_fn_decl =
-            (MXComptimeValueFnDecl){
-                .name = name,
-                .comptime_params = comptime_params,
-                .params = params,
-                .return_type = return_type,
-                .body = body,
-            },
-    };
-}
-
-MXComptimeValue mx_comptime_struct_decl(const char *name) {
-    return (MXComptimeValue){
-        .kind = MX_COMPTIME_VALUE_STRUCT_DECL,
-        .as_struct_decl = (MXComptimeValueStructDecl){.name = name},
-    };
-}
-
-MXComptimeValue mx_comptime_fn(const char *name) {
-    return (MXComptimeValue){
-        .kind = MX_COMPTIME_VALUE_FN,
-        .as_fn = (MXComptimeValueFn){.name = name},
-    };
-}
-
-MXComptimeValue mx_comptime_struct(const char *name) {
-    return (MXComptimeValue){
-        .kind = MX_COMPTIME_VALUE_STRUCT,
-        .as_struct = (MXComptimeValueStruct){.name = name},
-    };
-}
-
-MXComptimeValue mx_comptime_int(uint64_t value) {
-    return (MXComptimeValue){
-        .kind = MX_COMPTIME_VALUE_INT,
-        .as_int = (MXComptimeValueInt){.value = value},
-    };
-}
-
-MXComptimeValue mx_comptime_float_literal(double value) {
-    return (MXComptimeValue){
-        .kind = MX_COMPTIME_VALUE_FLOAT,
-        .as_float = (MXComptimeValueFloat){.value = value},
-    };
-}
-
-MXComptimeValue mx_comptime_string_literal(const char *value) {
-    return (MXComptimeValue){
-        .kind = MX_COMPTIME_VALUE_STRING,
-        .as_string = (MXComptimeValueString){.value = value},
-    };
-}
-
-MXComptimeValue mx_comptime_bool_literal(bool value) {
-    return (MXComptimeValue){
-        .kind = MX_COMPTIME_VALUE_BOOL,
-        .as_bool = (MXComptimeValueBool){.value = value},
-    };
-}
-
-MXComptimeValue mx_comptime_c_type(CType type) {
-    return (MXComptimeValue){
-        .kind = MX_COMPTIME_VALUE_C_TYPE,
-        .as_c_type = (MXComptimeValueCType){.type = type},
-    };
-}
-
-MXComptimeValue mx_comptime_c_value(CType type, CValue value) {
-    return (MXComptimeValue){
-        .kind = MX_COMPTIME_VALUE_C_VALUE,
-        .as_c_value = (MXComptimeValueCValue){.type = type, .value = value},
-    };
 }

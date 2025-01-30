@@ -4,6 +4,7 @@
 #include "comptime_value.h"
 #include "debug.h"
 #include "map.h"
+#include "mxir.h"
 #include "ts_ext.h"
 #include <tree_sitter/api.h>
 
@@ -113,7 +114,6 @@ static void bind_fn_decl(MXSema *sema, TSNode node, MXComptimeEnv *env) {
     env = open_env(sema, env, node);
 
     // Bind the comptime parameters
-    TSNodeList *comptime_params = NULL;
     if (ts_query_has_capture(query_results, "comptime_params")) {
         TSNode comptime_params_node =
             ts_query_first_node(query_results, "comptime_params");
@@ -131,13 +131,10 @@ static void bind_fn_decl(MXSema *sema, TSNode node, MXComptimeEnv *env) {
                 TSNode parameter = comptime_params_list->data[i];
                 bind_node(sema, parameter, env);
             }
-
-            comptime_params = comptime_params_list;
         }
     }
 
     // Bind the parameters
-    TSNodeList *params = NULL;
     if (ts_query_has_capture(query_results, "params")) {
         TSNode params_node = ts_query_first_node(query_results, "params");
 
@@ -153,8 +150,6 @@ static void bind_fn_decl(MXSema *sema, TSNode node, MXComptimeEnv *env) {
                 TSNode parameter = params_list->data[i];
                 bind_node(sema, parameter, env);
             }
-
-            params = params_list;
         }
     }
 
@@ -167,11 +162,6 @@ static void bind_fn_decl(MXSema *sema, TSNode node, MXComptimeEnv *env) {
     if (!ts_node_is_null(body_node)) {
         bind_node(sema, body_node, env);
     }
-
-    // Create a comptime value for the function declaration
-    MXComptimeValue fn_decl_value = mx_comptime_fn_decl(
-        name, comptime_params, params, return_type_node, body_node);
-    mx_comptime_env_set(env, name, fn_decl_value);
 
     // Restore the parent environment
     env = env->parent;
@@ -429,68 +419,6 @@ static void bind(MXSema *sema) {
     bind_node(sema, root_node, NULL);
 }
 
-static void comptime_noop(MXSema *sema, TSNode node, MXComptimeEnv *env) {
-    (void)sema;
-    (void)node;
-    (void)env;
-    ts_node_print(&sema->a, node, sema->src);
-}
-
-static struct {
-    const char *type;
-    SemaFn fn;
-} comptime_fns[] = {
-    {"int_literal", comptime_noop},
-};
-
-static void comptime_eval_node(MXSema *sema, MXComptimeEnv *env, TSNode node) {
-    assert(sema != NULL);
-    assert(env != NULL);
-    assert(!ts_node_is_null(node));
-
-    const char *node_type = ts_node_type(node);
-    assert(node_type != NULL);
-
-    for (size_t i = 0; i < sizeof(comptime_fns) / sizeof(comptime_fns[0]);
-         i++) {
-        if (strcmp(node_type, comptime_fns[i].type) == 0) {
-            comptime_fns[i].fn(sema, node, env);
-            return;
-        }
-    }
-}
-
-static void comptime_eval(MXSema *sema) {
-    assert(sema != NULL);
-    // Find the entry point
-    MXComptimeEnv *entry_point_env = NULL;
-    for (size_t i = 0; i < sema->envs.size; i++) {
-        // Check if the environment contains a function named "main"
-        MXComptimeEnv *env = sema->envs.data[i];
-        if (mx_comptime_env_contains(env, "main", false)) {
-            entry_point_env = env;
-            break;
-        }
-    }
-
-    if (entry_point_env == NULL) {
-        error(sema, "No entry point found", ts_tree_root_node(sema->tree));
-        return;
-    }
-
-    // Select the main function
-    MXComptimeBinding *main_fn_ref =
-        mx_comptime_env_get(entry_point_env, "main", false);
-    assert(main_fn_ref != NULL);
-
-    if (main_fn_ref->value.kind != MX_COMPTIME_VALUE_FN_DECL) {
-        error(sema, "main is not a function", main_fn_ref->node);
-        return;
-    }
-
-    (void)comptime_eval_node;
-}
-
 MXSema mx_sema_new(const char *src) {
     MXSema self = {0};
 
@@ -508,5 +436,22 @@ MXSema mx_sema_new(const char *src) {
 void mx_sema_analyze(MXSema *self) {
     assert(self != NULL);
     bind(self);
-    comptime_eval(self);
+
+    MXIRNodeList fns = mxir_node_list(&self->a);
+
+    MXIRNode *comptime_int = mxir_comptime_int(&self->a, 42);
+
+    MXIRNode *return_stmt = mxir_return(&self->a, comptime_int);
+
+    MXIRNodeList body_stmts = mxir_node_list(&self->a);
+    arraylist_add(&self->a, &body_stmts, *return_stmt);
+
+    MXIRNode *fn_body = mxir_block(&self->a, body_stmts);
+
+    MXIRNode *fn = mxir_fn(&self->a, "main", mxir_node_list(&self->a), fn_body);
+    arraylist_add(&self->a, &fns, *fn);
+
+    MXIRNode *module = mxir_module(&self->a, fns);
+    const char *sexpr = mxir_node_to_sexpr(&self->a, module);
+    debug("%s\n", sexpr);
 }

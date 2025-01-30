@@ -48,7 +48,10 @@
   (#eq? @variable.builtin "ref"))
 
 ((identifier) @variable.builtin
-  (#eq? @variable.builtin "mutref"))
+  (#eq? @variable.builtin "deref"))
+
+((identifier) @variable.builtin
+  (#eq? @variable.builtin "addr_of"))
 
 [
  "fn"

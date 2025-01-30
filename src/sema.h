@@ -1,15 +1,15 @@
 #ifndef SEMA_H
 #define SEMA_H
 
+#include "arena.h"
 #include "comptime_value.h"
-#include "parser.h"
 #include <tree_sitter/api.h>
 
 typedef struct {
     Arena a;
-    MXComptimeEnvRefList envs;
     const char *src;
     TSTree *tree;
+    MXComptimeEnvRefList envs;
 } MXSema;
 
 MXSema mx_sema_new(const char *src);

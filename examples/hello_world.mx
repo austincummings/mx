@@ -1,8 +1,17 @@
-fn main(): 0 {
-    return 0;
-}
-
-// Sema
-// fn main[](): comptime_int[0] {
-//     return comptime_int[0];
+// MX
+// fn main(p: ref[ComptimeInt]): 0 {
+//     var ret = deref[p];
+//     var addr = addr_of[ret];
+//     if true {
+//         ret = 0;
+//     }
+//     loop {
+//         if false {
+//             continue;
+//         }
+//         break;
+//     }
+//     1;
+//     return ret;
 // }
+fn main(): 0 {}
