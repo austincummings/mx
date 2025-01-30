@@ -1,9 +1,8 @@
-const ZERO = 0;
-
-fn main(): ZERO {
-    return zero[];
-}
-
-comptime fn zero[]: 0 {
+fn main(): 0 {
     return 0;
 }
+
+// Sema
+// fn main[](): comptime_int[0] {
+//     return comptime_int[0];
+// }

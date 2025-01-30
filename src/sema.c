@@ -381,12 +381,12 @@ static void bind_noop(MXSema *sema, TSNode node, MXComptimeEnv *env) {
     (void)env;
 }
 
-typedef void (*BindFunc)(MXSema *, TSNode, MXComptimeEnv *);
+typedef void (*SemaFn)(MXSema *, TSNode, MXComptimeEnv *);
 
 static struct {
     const char *type;
-    BindFunc func;
-} bind_functions[] = {
+    SemaFn fn;
+} bind_fns[] = {
     {"module", bind_module},
     {"fn_decl", bind_fn_decl},
     {"var_decl", bind_var_decl},
@@ -411,10 +411,9 @@ static void bind_node(MXSema *sema, TSNode node, MXComptimeEnv *env) {
 
     const char *node_type = ts_node_type(node);
 
-    for (size_t i = 0; i < sizeof(bind_functions) / sizeof(bind_functions[0]);
-         i++) {
-        if (strcmp(node_type, bind_functions[i].type) == 0) {
-            bind_functions[i].func(sema, node, env);
+    for (size_t i = 0; i < sizeof(bind_fns) / sizeof(bind_fns[0]); i++) {
+        if (strcmp(node_type, bind_fns[i].type) == 0) {
+            bind_fns[i].fn(sema, node, env);
             return;
         }
     }
@@ -430,30 +429,21 @@ static void bind(MXSema *sema) {
     bind_node(sema, root_node, NULL);
 }
 
-static MXComptimeValue comptime_eval_int_literal_node(MXSema *sema,
-                                                      TSNode node) {
-    assert(sema != NULL);
-    assert(!ts_node_is_null(node));
-
-    HashMap *query_results =
-        query(&sema->a, node, "(int_literal (_) @value)", true);
-    assert(query_results != NULL);
-
-    TSNode value_node = ts_query_first_node(query_results, "value");
-    assert(!ts_node_is_null(value_node));
-
-    const char *value_text = ts_node_text(&sema->a, value_node, sema->src);
-    assert(value_text != NULL);
-
-    int value = atoi(value_text); // TODO: Handle 64-bit integers
-    return (MXComptimeValue){
-        .kind = MX_COMPTIME_VALUE_INT_LITERAL,
-        .int_literal = (MXComptimeValueIntLiteral){.int_value = value},
-    };
+static void comptime_noop(MXSema *sema, TSNode node, MXComptimeEnv *env) {
+    (void)sema;
+    (void)node;
+    (void)env;
+    ts_node_print(&sema->a, node, sema->src);
 }
 
-static MXComptimeValue comptime_eval_node(MXSema *sema, MXComptimeEnv *env,
-                                          TSNode node) {
+static struct {
+    const char *type;
+    SemaFn fn;
+} comptime_fns[] = {
+    {"int_literal", comptime_noop},
+};
+
+static void comptime_eval_node(MXSema *sema, MXComptimeEnv *env, TSNode node) {
     assert(sema != NULL);
     assert(env != NULL);
     assert(!ts_node_is_null(node));
@@ -461,11 +451,12 @@ static MXComptimeValue comptime_eval_node(MXSema *sema, MXComptimeEnv *env,
     const char *node_type = ts_node_type(node);
     assert(node_type != NULL);
 
-    if (strcmp(node_type, "int_literal") == 0) {
-        return comptime_eval_int_literal_node(sema, node);
-    } else {
-        debug("unhandled node type in comptime_eval_node: %s\n", node_type);
-        abort();
+    for (size_t i = 0; i < sizeof(comptime_fns) / sizeof(comptime_fns[0]);
+         i++) {
+        if (strcmp(node_type, comptime_fns[i].type) == 0) {
+            comptime_fns[i].fn(sema, node, env);
+            return;
+        }
     }
 }
 

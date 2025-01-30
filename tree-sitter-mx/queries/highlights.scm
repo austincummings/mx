@@ -28,11 +28,27 @@
   (#match? @constant "^[A-Z][A-Z_]+$"))
 
 ; Built-in types
+((identifier) @type.builtin
+  (#eq? @type.builtin "Self"))
+
+((identifier) @type.builtin
+  (#eq? @type.builtin "void"))
+
+; Built-in identifiers
+((identifier) @variable.builtin
+  (#eq? @variable.builtin "expr"))
+
 ((identifier) @variable.builtin
   (#eq? @variable.builtin "self"))
 
 ((identifier) @variable.builtin
   (#eq? @variable.builtin "comptime"))
+
+((identifier) @variable.builtin
+  (#eq? @variable.builtin "ref"))
+
+((identifier) @variable.builtin
+  (#eq? @variable.builtin "mutref"))
 
 [
  "fn"

@@ -12,14 +12,14 @@ typedef enum {
     MX_COMPTIME_VALUE_FN_DECL,     // fn f(): comptime_expr {}
     MX_COMPTIME_VALUE_STRUCT_DECL, // struct MyStruct {}
 
-    MX_COMPTIME_VALUE_FN,             // a resolved function
-    MX_COMPTIME_VALUE_STRUCT,         // a resolved struct
-    MX_COMPTIME_VALUE_INT_LITERAL,    // 42
-    MX_COMPTIME_VALUE_FLOAT_LITERAL,  // 42.0
-    MX_COMPTIME_VALUE_STRING_LITERAL, // "Hello world"
-    MX_COMPTIME_VALUE_BOOL_LITERAL,   // true, false
-    MX_COMPTIME_VALUE_C_TYPE,         // c_type["int"]
-    MX_COMPTIME_VALUE_C_VALUE,        // c_value[42]
+    MX_COMPTIME_VALUE_FN,      // a resolved function
+    MX_COMPTIME_VALUE_STRUCT,  // a resolved struct
+    MX_COMPTIME_VALUE_INT,     // 42
+    MX_COMPTIME_VALUE_FLOAT,   // 42.0
+    MX_COMPTIME_VALUE_STRING,  // "Hello world"
+    MX_COMPTIME_VALUE_BOOL,    // true, false
+    MX_COMPTIME_VALUE_C_TYPE,  // c_type["int"]
+    MX_COMPTIME_VALUE_C_VALUE, // c_value[42]
 
     MX_COMPTIME_VALUE_ENUM_COUNT
 } MXComptimeValueKind;
@@ -29,20 +29,10 @@ typedef ArrayList(MXComptimeValue) MXComptimeValueList;
 
 typedef struct {
     const char *name;
-    TSNodeList *comptime_params;
-    TSNodeList *params;
-    TSNode return_type;
-    TSNode body;
-} MXComptimeValueFnDecl;
-
-typedef struct {
-    const char *name;
-} MXComptimeValueStructDecl;
-
-typedef struct {
-    const char *name;
-    // TODO: Add resolved params and body
+    MXComptimeValueList comptime_args;
 } MXComptimeValueFn;
+
+typedef ArrayList(MXComptimeValueFn) MXComptimeValueFnList;
 
 typedef struct {
     const char *name;
@@ -50,20 +40,35 @@ typedef struct {
 } MXComptimeValueStruct;
 
 typedef struct {
-    uint64_t int_value;
-} MXComptimeValueIntLiteral;
+    const char *name;
+    TSNodeList *comptime_params;
+    TSNodeList *params;
+    TSNode return_type;
+    TSNode body;
+
+    MXComptimeValueFnList variants;
+} MXComptimeValueFnDecl;
 
 typedef struct {
-    double float_value;
-} MXComptimeValueFloatLiteral;
+    const char *name;
+    // TODO: Expand
+} MXComptimeValueStructDecl;
 
 typedef struct {
-    const char *string_value;
-} MXComptimeValueStringLiteral;
+    uint64_t value;
+} MXComptimeValueInt;
 
 typedef struct {
-    bool bool_value;
-} MXComptimeValueBoolLiteral;
+    double value;
+} MXComptimeValueFloat;
+
+typedef struct {
+    const char *value;
+} MXComptimeValueString;
+
+typedef struct {
+    bool value;
+} MXComptimeValueBool;
 
 typedef enum {
     C_TYPE_UNKNOWN,
@@ -107,16 +112,16 @@ typedef struct {
 struct MXComptimeValue {
     MXComptimeValueKind kind;
     union {
-        MXComptimeValueFnDecl fn_decl;
-        MXComptimeValueStructDecl struct_decl;
-        MXComptimeValueFn fn;
-        MXComptimeValueStruct struct_;
-        MXComptimeValueIntLiteral int_literal;
-        MXComptimeValueFloatLiteral float_literal;
-        MXComptimeValueStringLiteral string_literal;
-        MXComptimeValueBoolLiteral bool_literal;
-        MXComptimeValueCType c_type;
-        MXComptimeValueCValue c_value;
+        MXComptimeValueFnDecl as_fn_decl;
+        MXComptimeValueStructDecl as_struct_decl;
+        MXComptimeValueFn as_fn;
+        MXComptimeValueStruct as_struct;
+        MXComptimeValueInt as_int;
+        MXComptimeValueFloat as_float;
+        MXComptimeValueString as_string;
+        MXComptimeValueBool as_bool;
+        MXComptimeValueCType as_c_type;
+        MXComptimeValueCValue as_c_value;
     };
 };
 
@@ -133,13 +138,13 @@ MXComptimeValue mx_comptime_fn(const char *name);
 
 MXComptimeValue mx_comptime_struct(const char *name);
 
-MXComptimeValue mx_comptime_int_literal(uint64_t value);
+MXComptimeValue mx_comptime_int(uint64_t value);
 
-MXComptimeValue mx_comptime_float_literal(double value);
+MXComptimeValue mx_comptime_float(double value);
 
-MXComptimeValue mx_comptime_string_literal(const char *value);
+MXComptimeValue mx_comptime_string(const char *value);
 
-MXComptimeValue mx_comptime_bool_literal(bool value);
+MXComptimeValue mx_comptime_bool(bool value);
 
 MXComptimeValue mx_comptime_c_type(CType type);
 
