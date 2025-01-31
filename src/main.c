@@ -23,10 +23,13 @@ const char *read_file(Arena *a, const char *path) {
 
     const char *buffer = arena_alloc(a, size);
     fread((void *)buffer, 1, size, f);
+
     return buffer;
 }
 
 int main(int argc, const char **argv) {
+    setup_signal_handler();
+
     const char *path = NULL;
     if (argc > 1) {
         path = argv[1];

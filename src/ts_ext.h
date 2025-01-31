@@ -17,7 +17,7 @@ char *ts_node_text(Arena *a, TSNode node, const char *src);
 
 char *ts_node_line_text(Arena *a, TSNode node, const char *src);
 
-char *ts_node_id_to_string(Arena *a, uintptr_t node_id);
+const char *ptr_to_str(Arena *a, const void *node_id);
 
 char *ts_node_name(Arena *a, TSNode node, const char *src);
 

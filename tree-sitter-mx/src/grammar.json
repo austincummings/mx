@@ -3,7 +3,7 @@
   "name": "mx",
   "word": "identifier",
   "rules": {
-    "module": {
+    "source_file": {
       "type": "REPEAT",
       "content": {
         "type": "CHOICE",
@@ -699,15 +699,15 @@
         },
         {
           "type": "SYMBOL",
-          "name": "identifier"
-        },
-        {
-          "type": "SYMBOL",
           "name": "call_expr"
         },
         {
           "type": "SYMBOL",
           "name": "member_expr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "variable_expr"
         },
         {
           "type": "SYMBOL",
@@ -747,6 +747,10 @@
           }
         ]
       }
+    },
+    "variable_expr": {
+      "type": "SYMBOL",
+      "name": "identifier"
     },
     "group_expr": {
       "type": "PREC",

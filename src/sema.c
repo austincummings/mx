@@ -10,32 +10,6 @@
 
 static void bind_node(MXSema *sema, TSNode node, MXComptimeEnv *env);
 
-// static MXComptimeValueCType resolve_c_type(MXSema *sema, TSNode node,
-// MXComptimeEnv *env) {
-//     assert(!ts_node_is_null(node));
-//
-//     HashMap *query_results =
-//         query(&sema->a, node,
-//                       "(comptime_call_expr"
-//                       "  comptime_arguments: (expr_list ((string_literal) "
-//                       "@string_literal)))");
-//     assert(query_results != NULL);
-//
-//     TSNode arg_node = ts_query_first_node(query_results, "string_literal");
-//     const char *text = ts_node_text(&sema->a, arg_node, sema->src);
-//
-//     debug("text = %s\n", text);
-//
-//     CType c_type = C_TYPE_UNKNOWN;
-//     if (strcmp(text, "\"int\"") == 0) {
-//         c_type = C_TYPE_INT;
-//     } else if (strcmp(text, "\"unsigned int\"") == 0) {
-//         c_type = C_TYPE_UINT;
-//     }
-//
-//     return (MXComptimeValueCType){.type = c_type};
-// }
-
 static void error(MXSema *sema, const char *msg, TSNode node) {
     assert(sema != NULL);
     assert(msg != NULL);
@@ -54,20 +28,25 @@ static MXComptimeEnv *open_env(MXSema *sema, MXComptimeEnv *parent,
     assert(sema != NULL);
     MXComptimeEnv *env = mx_comptime_env_new(&sema->a, parent, node);
     assert(env != NULL);
+
+    size_t index = sema->envs.size;
     arraylist_add(&sema->a, &sema->envs, env);
+    const char *node_id = ptr_to_str(&sema->a, node.id);
+    hashmap_set(&sema->a, sema->node_to_env_index, node_id, (void *)index);
+
     return env;
 }
 
-static void bind_module(MXSema *sema, TSNode node, MXComptimeEnv *env) {
+static void bind_source_file(MXSema *sema, TSNode node, MXComptimeEnv *env) {
     assert(sema != NULL);
     assert(!ts_node_is_null(node));
-    assert(env == NULL); // env should be null for the module node
+    assert(env == NULL); // env should be null for the source_file node
 
     env = open_env(sema, NULL, node);
     assert(env != NULL);
 
     HashMap *query_results =
-        query(&sema->a, node, "(module (_) @children)", true);
+        query(&sema->a, node, "(source_file (_) @children)", true);
     assert(query_results != NULL);
 
     if (ts_query_has_capture(query_results, "children")) {
@@ -377,7 +356,7 @@ static struct {
     const char *type;
     SemaFn fn;
 } bind_fns[] = {
-    {"module", bind_module},
+    {"source_file", bind_source_file},
     {"fn_decl", bind_fn_decl},
     {"var_decl", bind_var_decl},
     {"const_decl", bind_const_decl},
@@ -419,6 +398,77 @@ static void bind(MXSema *sema) {
     bind_node(sema, root_node, NULL);
 }
 
+static MXIRNode *mxirgen_fn_decl(MXSema *sema, TSNode node,
+                                 MXComptimeEnv *env) {
+    assert(sema != NULL);
+    assert(!ts_node_is_null(node));
+    assert(env == NULL);
+
+    HashMap *query_results =
+        query(&sema->a, node,
+              "(fn_decl"
+              "  name: (_) @name"
+              "  comptime_parameters: (_)? @comptime_params"
+              "  parameters: (_)? @params"
+              "  return_type: (_) @return_type"
+              "  body: (_) @body)",
+              true);
+    assert(query_results != NULL);
+
+    TSNode name_node = ts_query_first_node(query_results, "name");
+    assert(!ts_node_is_null(name_node));
+
+    const char *name = ts_node_text(&sema->a, name_node, sema->src);
+
+    return mxir_fn(&sema->a, name, mxir_node_list(&sema->a),
+                   mxir_block(&sema->a, mxir_node_list(&sema->a)));
+}
+
+typedef MXIRNode *(*MXIRGenFn)(MXSema *, TSNode, MXComptimeEnv *);
+
+static struct {
+    const char *type;
+    MXIRGenFn fn;
+} mxirgen_fns[] = {
+    {"fn_decl", mxirgen_fn_decl},
+};
+
+static MXIRNode *mxirgen_node(MXSema *sema, TSNode node) {
+    assert(sema != NULL);
+    assert(!ts_node_is_null(node));
+
+    const char *node_type = ts_node_type(node);
+
+    for (size_t i = 0; i < sizeof(mxirgen_fns) / sizeof(mxirgen_fns[0]); i++) {
+        if (strcmp(node_type, mxirgen_fns[i].type) == 0) {
+            MXIRNode *irnode = mxirgen_fns[i].fn(sema, node, NULL);
+            assert(irnode != NULL);
+            return irnode;
+        }
+    }
+
+    ts_node_print(&sema->a, node, sema->src);
+    todo("Unhandled node type: %s\n", node_type);
+
+    return NULL;
+}
+
+static void mxirgen(MXSema *sema) {
+    assert(sema != NULL);
+
+    // Find the entrypoint function in the top level env
+    MXComptimeEnv *root_env = sema->envs.data[0];
+    assert(root_env != NULL);
+
+    MXComptimeBinding *binding = mx_comptime_env_get(root_env, "main", false);
+    assert(binding != NULL);
+
+    MXIRNode *main_fn_node = mxirgen_node(sema, binding->node);
+    assert(main_fn_node != NULL);
+    const char *sexpr = mxir_node_to_sexpr(&sema->a, main_fn_node);
+    debug("%s\n", sexpr);
+}
+
 MXSema mx_sema_new(const char *src) {
     MXSema self = {0};
 
@@ -428,6 +478,8 @@ MXSema mx_sema_new(const char *src) {
     self.envs = (MXComptimeEnvRefList){0};
     arraylist_init(&self.a, &self.envs, 64);
 
+    self.node_to_env_index = hashmap_init(&self.a);
+
     self.src = src;
 
     return self;
@@ -436,22 +488,6 @@ MXSema mx_sema_new(const char *src) {
 void mx_sema_analyze(MXSema *self) {
     assert(self != NULL);
 
-    MXIRNodeList fns = mxir_node_list(&self->a);
-
-    MXIRNode *comptime_int = mxir_comptime_int(&self->a, 42);
-
-    MXIRNode *return_stmt = mxir_return(&self->a, comptime_int);
-
-    MXIRNodeList body_stmts = mxir_node_list(&self->a);
-    arraylist_add(&self->a, &body_stmts, *return_stmt);
-
-    MXIRNode *fn_body = mxir_block(&self->a, body_stmts);
-
-    MXIRNode *fn = mxir_fn(&self->a, "main", mxir_node_list(&self->a), fn_body);
-    arraylist_add(&self->a, &fns, *fn);
-
-    const char *sexpr = mxir_node_to_sexpr(&self->a, fn);
-    debug("%s\n", sexpr);
-
     bind(self);
+    mxirgen(self);
 }

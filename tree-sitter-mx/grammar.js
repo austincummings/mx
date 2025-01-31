@@ -30,7 +30,7 @@ module.exports = grammar({
   conflicts: $ => [[$._expr, $.comptime_expr]],
 
   rules: {
-    module: $ => repeat(choice($._decl)),
+    source_file: $ => repeat(choice($._decl)),
 
     // Declarations
 
@@ -139,9 +139,9 @@ module.exports = grammar({
       $.string_literal,
       $.multiline_string_literal,
       $.bool_literal,
-      $.identifier,
       $.call_expr,
       $.member_expr,
+      $.variable_expr,
       $.group_expr,
       $.block,
     ),
@@ -151,6 +151,8 @@ module.exports = grammar({
       ".",
       field("member", $.identifier),
     )),
+
+    variable_expr: $ => $.identifier,
 
     group_expr: $ => prec(PREC.group, seq("(", $._expr, ")")),
 

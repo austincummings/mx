@@ -1,6 +1,7 @@
 #include "ts_ext.h"
 #include "array_list.h"
 #include "map.h"
+#include <stdint.h>
 #include <tree_sitter/api.h>
 
 void ts_node_print(Arena *a, const TSNode node, const char *src) {
@@ -61,9 +62,9 @@ char *ts_node_line_text(Arena *a, TSNode node, const char *src) {
     return line;
 }
 
-char *ts_node_id_to_string(Arena *a, uintptr_t node_id) {
+const char *ptr_to_str(Arena *a, const void *node_id) {
     // Pre-calculate the size needed for the string representation
-    size_t s = snprintf(NULL, 0, "%" PRIuPTR, node_id) + 1;
+    size_t s = snprintf(NULL, 0, "%" PRIuPTR, (uintptr_t)node_id) + 1;
 
     // Allocate memory in the arena for the string representation
     char *buffer = (char *)arena_alloc(a, s);
@@ -72,7 +73,7 @@ char *ts_node_id_to_string(Arena *a, uintptr_t node_id) {
     }
 
     // Convert the uintptr_t node_id to a string
-    snprintf(buffer, s, "%" PRIuPTR, node_id);
+    snprintf(buffer, s, "%" PRIuPTR, (uintptr_t)node_id);
 
     return buffer;
 }
