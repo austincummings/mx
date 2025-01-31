@@ -398,30 +398,22 @@ static void bind(MXSema *sema) {
     bind_node(sema, root_node, NULL);
 }
 
-static MXIRNode *mxirgen_fn_decl(MXSema *sema, TSNode node,
-                                 MXComptimeEnv *env) {
+static MXIRNode *mxirgen_fn(MXSema *sema, TSNode node, MXComptimeEnv *env) {
     assert(sema != NULL);
     assert(!ts_node_is_null(node));
-    assert(env == NULL);
+    assert(env != NULL);
 
-    HashMap *query_results =
-        query(&sema->a, node,
-              "(fn_decl"
-              "  name: (_) @name"
-              "  comptime_parameters: (_)? @comptime_params"
-              "  parameters: (_)? @params"
-              "  return_type: (_) @return_type"
-              "  body: (_) @body)",
-              true);
-    assert(query_results != NULL);
+    abort();
 
-    TSNode name_node = ts_query_first_node(query_results, "name");
-    assert(!ts_node_is_null(name_node));
+    return NULL;
+}
 
-    const char *name = ts_node_text(&sema->a, name_node, sema->src);
-
-    return mxir_fn(&sema->a, name, mxir_node_list(&sema->a),
-                   mxir_block(&sema->a, mxir_node_list(&sema->a)));
+static MXIRNode *mxirgen_unhandled(MXSema *sema, TSNode node,
+                                   MXComptimeEnv *env) {
+    (void)sema;
+    (void)env;
+    ts_node_print(&sema->a, node, sema->src);
+    abort();
 }
 
 typedef MXIRNode *(*MXIRGenFn)(MXSema *, TSNode, MXComptimeEnv *);
@@ -430,7 +422,7 @@ static struct {
     const char *type;
     MXIRGenFn fn;
 } mxirgen_fns[] = {
-    {"fn_decl", mxirgen_fn_decl},
+    {"", mxirgen_unhandled},
 };
 
 static MXIRNode *mxirgen_node(MXSema *sema, TSNode node) {
@@ -447,8 +439,7 @@ static MXIRNode *mxirgen_node(MXSema *sema, TSNode node) {
         }
     }
 
-    ts_node_print(&sema->a, node, sema->src);
-    todo("Unhandled node type: %s\n", node_type);
+    mxirgen_unhandled(sema, node, NULL);
 
     return NULL;
 }
@@ -463,7 +454,9 @@ static void mxirgen(MXSema *sema) {
     MXComptimeBinding *binding = mx_comptime_env_get(root_env, "main", false);
     assert(binding != NULL);
 
-    MXIRNode *main_fn_node = mxirgen_node(sema, binding->node);
+    (void)mxirgen_node;
+
+    MXIRNode *main_fn_node = mxirgen_fn(sema, binding->node, root_env);
     assert(main_fn_node != NULL);
     const char *sexpr = mxir_node_to_sexpr(&sema->a, main_fn_node);
     debug("%s\n", sexpr);

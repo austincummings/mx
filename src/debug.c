@@ -20,7 +20,7 @@ void todo(const char *format, ...) {
     va_start(args, format);
     vfprintf(stderr, format, args);
     va_end(args);
-    mx_abort();
+    abort();
 }
 
 void print_stack_trace(void) {
@@ -33,21 +33,21 @@ void print_stack_trace(void) {
         exit(EXIT_FAILURE);
     }
 
-    printf("Stack trace:\n");
+    fprintf(stderr, "Stack trace:\n");
     for (int i = 0; i < nptrs; i++) {
-        // printf("[%d] %s\n", i, symbols[i]);
+        fprintf(stderr, "stack[%d] %s\n", i, symbols[i]);
 
         // Resolve function name using addr2line
-        char cmd[256];
-        snprintf(cmd, sizeof(cmd), "addr2line -f -e mx %p", buffer[i]);
-        system(cmd);
+        // char cmd[256];
+        // snprintf(cmd, sizeof(cmd), "addr2line -f -e mx %p", buffer[i]);
+        // system(cmd);
     }
 
     free(symbols);
 }
 
 void crash_handler(int sig) {
-    printf("\nCaught signal %d (%s)\n", sig, strsignal(sig));
+    fprintf(stderr, "\nCaught signal %d (%s)\n", sig, strsignal(sig));
     print_stack_trace();
     exit(EXIT_FAILURE); // Exit after printing the stack trace
 }
@@ -63,9 +63,4 @@ void setup_signal_handler() {
     sigaction(SIGFPE, &sa, NULL);  // Floating point exception
     sigaction(SIGILL, &sa, NULL);  // Illegal instruction
     sigaction(SIGBUS, &sa, NULL);  // Bus error (bad memory access)
-}
-
-[[noreturn]] void mx_abort() {
-    print_stack_trace(); // Print stack trace before aborting
-    abort();
 }

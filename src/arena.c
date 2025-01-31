@@ -44,7 +44,7 @@ void *arena_alloc(Arena *arena, size_t size) {
 
     if (next_end > arena_end) {
         fprintf(stderr, "Overflowing arena\n");
-        mx_abort();
+        abort();
     }
 
     // Commit the memory
@@ -52,7 +52,7 @@ void *arena_alloc(Arena *arena, size_t size) {
     if (mprotect(arena->next, aligned_size, PROT_READ | PROT_WRITE) == -1) {
         char *err = strerror(errno);
         fprintf(stderr, "Could not commit arena bytes: %s\n", err);
-        mx_abort();
+        abort();
     }
     uint8_t *result = arena->next;
     memset(result, 0, aligned_size);
