@@ -1,9 +1,10 @@
-const ZERO = 0;
+fn main(): 0 {
+    return 0;
 
-fn main(): ZERO {
-    return zero[];
+    // TODO: Test
 }
 
-comptime fn zero[]: 0 {
+fn mx_abort(): 0 {
+
     return 0;
 }

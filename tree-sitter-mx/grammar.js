@@ -30,33 +30,18 @@ module.exports = grammar({
   conflicts: $ => [[$._expr, $.comptime_expr]],
 
   rules: {
-    module: $ => repeat(choice($._decl)),
+    source_file: $ => repeat(choice($._decl)),
 
     // Declarations
 
-    _decl: $ => seq(choice($._fn_decl, $.var_decl, $.const_decl, $.struct_decl)),
-
-    _fn_decl: $ => choice(
-      $.comptime_fn_decl,
-      $.fn_decl
-    ),
-
-    comptime_fn_decl: $ => seq(
-      "comptime",
-      "fn",
-      field("name", $.identifier),
-      optional(seq("[", field("comptime_parameters", optional($.parameter_list)), "]")),
-      ":",
-      field("return_type", $.comptime_expr),
-      field("body", $.block),
-    ),
+    _decl: $ => seq(choice($.struct_decl, $.fn_decl, $.var_decl, $.const_decl)),
 
     fn_decl: $ => seq(
       "fn",
       field("name", $.identifier),
-      optional(seq("[", field("comptime_parameters", optional($.parameter_list)), "]")),
+      optional(seq("[", field("comptime_params", optional($.param_list)), "]")),
       "(",
-      field("parameters", optional($.parameter_list)),
+      field("params", optional($.param_list)),
       ")",
       ":",
       field("return_type", $.comptime_expr),
@@ -82,7 +67,7 @@ module.exports = grammar({
     struct_decl: $ => seq(
       "struct",
       field("name", $.identifier),
-      optional(seq("[", field("comptime_parameters", $.parameter_list), "]")),
+      optional(seq("[", field("comptime_params", $.param_list), "]")),
       field("body", $.block)
     ),
 
@@ -139,9 +124,9 @@ module.exports = grammar({
       $.string_literal,
       $.multiline_string_literal,
       $.bool_literal,
-      $.identifier,
       $.call_expr,
       $.member_expr,
+      $.variable_expr,
       $.group_expr,
       $.block,
     ),
@@ -151,6 +136,8 @@ module.exports = grammar({
       ".",
       field("member", $.identifier),
     )),
+
+    variable_expr: $ => $.identifier,
 
     group_expr: $ => prec(PREC.group, seq("(", $._expr, ")")),
 
@@ -257,13 +244,13 @@ module.exports = grammar({
 
     line_comment: $ => token(seq("//", /.*/)),
 
-    parameter_list: $ => seq(
-      $.parameter,
-      repeat(seq(",", $.parameter)),
+    param_list: $ => seq(
+      $.param,
+      repeat(seq(",", $.param)),
       optional(","),
     ),
 
-    parameter: $ => seq(
+    param: $ => seq(
       field("name", $.identifier),
       ":",
       field("type", $._expr),

@@ -3,7 +3,7 @@
   "name": "mx",
   "word": "identifier",
   "rules": {
-    "module": {
+    "source_file": {
       "type": "REPEAT",
       "content": {
         "type": "CHOICE",
@@ -23,7 +23,11 @@
           "members": [
             {
               "type": "SYMBOL",
-              "name": "_fn_decl"
+              "name": "struct_decl"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "fn_decl"
             },
             {
               "type": "SYMBOL",
@@ -32,103 +36,8 @@
             {
               "type": "SYMBOL",
               "name": "const_decl"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "struct_decl"
             }
           ]
-        }
-      ]
-    },
-    "_fn_decl": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "comptime_fn_decl"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "fn_decl"
-        }
-      ]
-    },
-    "comptime_fn_decl": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "comptime"
-        },
-        {
-          "type": "STRING",
-          "value": "fn"
-        },
-        {
-          "type": "FIELD",
-          "name": "name",
-          "content": {
-            "type": "SYMBOL",
-            "name": "identifier"
-          }
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SEQ",
-              "members": [
-                {
-                  "type": "STRING",
-                  "value": "["
-                },
-                {
-                  "type": "FIELD",
-                  "name": "comptime_parameters",
-                  "content": {
-                    "type": "CHOICE",
-                    "members": [
-                      {
-                        "type": "SYMBOL",
-                        "name": "parameter_list"
-                      },
-                      {
-                        "type": "BLANK"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "type": "STRING",
-                  "value": "]"
-                }
-              ]
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
-        },
-        {
-          "type": "STRING",
-          "value": ":"
-        },
-        {
-          "type": "FIELD",
-          "name": "return_type",
-          "content": {
-            "type": "SYMBOL",
-            "name": "comptime_expr"
-          }
-        },
-        {
-          "type": "FIELD",
-          "name": "body",
-          "content": {
-            "type": "SYMBOL",
-            "name": "block"
-          }
         }
       ]
     },
@@ -699,15 +608,15 @@
         },
         {
           "type": "SYMBOL",
-          "name": "identifier"
-        },
-        {
-          "type": "SYMBOL",
           "name": "call_expr"
         },
         {
           "type": "SYMBOL",
           "name": "member_expr"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "variable_expr"
         },
         {
           "type": "SYMBOL",
@@ -747,6 +656,10 @@
           }
         ]
       }
+    },
+    "variable_expr": {
+      "type": "SYMBOL",
+      "name": "identifier"
     },
     "group_expr": {
       "type": "PREC",
