@@ -403,46 +403,56 @@ static MXIRNode *mxirgen_fn(MXSema *sema, TSNode node, MXComptimeEnv *env) {
     assert(!ts_node_is_null(node));
     assert(env != NULL);
 
-    abort();
+    // TODO: Get the env that defines the comptime parameters of the fn_decl
+    size_t index = (size_t)hashmap_get(sema->node_to_env_index,
+                                       ptr_to_str(&sema->a, node.id));
+    MXComptimeEnv *comptime_params_env = sema->envs.data[index];
+    assert(comptime_params_env != NULL);
+    debug("comptime_params_env:\n");
+    mx_comptime_env_dump(comptime_params_env, 0, true, sema->src);
+
+    // TODO: Clone the env, and bind the comptime arguments to the cloned env
+    // TODO: Generate the IR for the function
 
     return NULL;
 }
 
-static MXIRNode *mxirgen_unhandled(MXSema *sema, TSNode node,
-                                   MXComptimeEnv *env) {
-    (void)sema;
-    (void)env;
-    ts_node_print(&sema->a, node, sema->src);
-    abort();
-}
+// static MXIRNode *mxirgen_unhandled(MXSema *sema, TSNode node,
+//                                    MXComptimeEnv *env) {
+//     (void)sema;
+//     (void)env;
+//     ts_node_print(&sema->a, node, sema->src);
+//     abort();
+// }
 
 typedef MXIRNode *(*MXIRGenFn)(MXSema *, TSNode, MXComptimeEnv *);
 
-static struct {
-    const char *type;
-    MXIRGenFn fn;
-} mxirgen_fns[] = {
-    {"", mxirgen_unhandled},
-};
+// static struct {
+//     const char *type;
+//     MXIRGenFn fn;
+// } mxirgen_fns[] = {
+//     {"", mxirgen_unhandled},
+// };
 
-static MXIRNode *mxirgen_node(MXSema *sema, TSNode node) {
-    assert(sema != NULL);
-    assert(!ts_node_is_null(node));
-
-    const char *node_type = ts_node_type(node);
-
-    for (size_t i = 0; i < sizeof(mxirgen_fns) / sizeof(mxirgen_fns[0]); i++) {
-        if (strcmp(node_type, mxirgen_fns[i].type) == 0) {
-            MXIRNode *irnode = mxirgen_fns[i].fn(sema, node, NULL);
-            assert(irnode != NULL);
-            return irnode;
-        }
-    }
-
-    mxirgen_unhandled(sema, node, NULL);
-
-    return NULL;
-}
+// static MXIRNode *mxirgen_node(MXSema *sema, TSNode node) {
+//     assert(sema != NULL);
+//     assert(!ts_node_is_null(node));
+//
+//     const char *node_type = ts_node_type(node);
+//
+//     for (size_t i = 0; i < sizeof(mxirgen_fns) / sizeof(mxirgen_fns[0]); i++)
+//     {
+//         if (strcmp(node_type, mxirgen_fns[i].type) == 0) {
+//             MXIRNode *irnode = mxirgen_fns[i].fn(sema, node, NULL);
+//             assert(irnode != NULL);
+//             return irnode;
+//         }
+//     }
+//
+//     mxirgen_unhandled(sema, node, NULL);
+//
+//     return NULL;
+// }
 
 static void mxirgen(MXSema *sema) {
     assert(sema != NULL);
@@ -453,8 +463,6 @@ static void mxirgen(MXSema *sema) {
 
     MXComptimeBinding *binding = mx_comptime_env_get(root_env, "main", false);
     assert(binding != NULL);
-
-    (void)mxirgen_node;
 
     MXIRNode *main_fn_node = mxirgen_fn(sema, binding->node, root_env);
     assert(main_fn_node != NULL);
