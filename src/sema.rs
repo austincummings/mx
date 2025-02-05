@@ -4,6 +4,7 @@ use tree_sitter::{Language, Node, Tree};
 
 use crate::{
     diag::{MXDiagnostic, MXDiagnosticKind, MXPosition, MXRange},
+    parser::{MXNode, MXNodeRef},
     query::query,
 };
 
@@ -11,47 +12,49 @@ use crate::{
 pub struct Sema {
     src: String,
     language: Language,
+    nodes: Vec<MXNode>,
     diagnostics: Vec<MXDiagnostic>,
 }
 
 impl Sema {
-    pub fn new(language: Language, src: &str) -> Self {
+    pub fn new(language: Language, nodes: Vec<MXNode>, src: &str) -> Self {
         Self {
             language,
+            nodes,
             src: src.to_string(),
             diagnostics: vec![],
         }
     }
 
-    pub fn analyze(&mut self, tree: Tree) {
-        // // Find main function
-        // let entrypoint_node = self.find_entrypoint_node(tree);
-        // if let Some(node) = entrypoint_node.clone() {
-        //     // Check if the main function has comptime params
-        //     let comptime_args = HashMap::new();
-        //     self.comptime_instantiate_fn(node, comptime_args);
-        // } else {
-        //     self.report_missing_main_function();
-        // }
+    pub fn analyze(&mut self) {
+        // Find main function
+        let entrypoint_node = self.find_entrypoint_node();
+        eprintln!("{:?}", entrypoint_node);
+        if let Some(node) = entrypoint_node.clone() {
+            // Check if the main function has comptime params
+            // let comptime_args = HashMap::new();
+            // self.comptime_instantiate_fn(node, comptime_args);
+        } else {
+            self.report_missing_main_function();
+        }
     }
 
-    fn find_entrypoint_node(&self, tree: Tree) -> Option<Node> {
-        // let root_node = tree.root_node();
-        //
-        // // Find main function
-        // let query_str = r#"
-        //     (source_file
-        //         (fn_decl name: ((identifier) @name)
-        //                         (#eq? @name "main")) @main
-        //     )
-        // "#;
-        // let nodes = query(root_node, &self.src, &self.language, query_str, true);
-        // if nodes.contains_key("main") {
-        //     return Some(nodes.get("main").unwrap()[0]);
-        // }
-        //
-        // None
-        todo!()
+    fn find_entrypoint_node(&self) -> Option<MXNodeRef> {
+        for i in 0..self.nodes.len() {
+            let node = &self.nodes[i];
+            if node.kind == "fn_decl" {
+                eprintln!("{:?}", node);
+                if node.named_children.contains_key("name") {
+                    let name_node_ref = node.named_children.get("name").unwrap();
+                    let name_node = self.nodes[name_node_ref.0 as usize].clone();
+                    if name_node.text == "main" {
+                        return Some(node.self_ref);
+                    }
+                }
+            }
+        }
+
+        None
     }
 
     fn comptime_instantiate_fn(

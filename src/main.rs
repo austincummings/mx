@@ -65,10 +65,9 @@ async fn main() {
 
             // Parse the input
             parser.parse(&input);
-            // let tree = parser.tree();
 
-            // let mut sema = Sema::new(language.clone(), tree, &input);
-            // sema.analyze();
+            let mut sema = Sema::new(language.clone(), parser.nodes.clone(), &input);
+            sema.analyze();
         }
         _ => {
             eprintln!("Unknown command: {}", args[1]);

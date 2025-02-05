@@ -30,8 +30,8 @@ impl MXLanguageServer {
         let mut parser = MXParser::new(self.language.clone());
         parser.parse(text);
 
-        // let mut sema = Sema::new(self.language.clone(), parser.tree(), text);
-        // sema.analyze();
+        let mut sema = Sema::new(self.language.clone(), parser.nodes.clone(), text);
+        sema.analyze();
 
         let mut diagnostics = vec![];
         for parse_error in parser.diagnostics() {
