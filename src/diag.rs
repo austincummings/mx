@@ -1,27 +1,26 @@
 #[derive(Debug, Clone)]
-pub struct MXLocation {
-    pub start: (usize, usize),
-    pub end: (usize, usize),
+pub struct MXPosition {
+    pub row: usize,
+    pub col: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct MXRange {
+    pub start: MXPosition,
+    pub end: MXPosition,
 }
 
 #[derive(Debug, Clone)]
 pub struct MXDiagnostic {
-    pub location: MXLocation,
-    pub severity: MXDiagnosticSeverity,
+    pub range: MXRange,
     pub kind: MXDiagnosticKind,
-}
-
-#[derive(Clone, Debug)]
-pub enum MXDiagnosticSeverity {
-    Error,
-    Warning,
-    Info,
 }
 
 #[derive(Clone, Debug)]
 pub enum MXDiagnosticKind {
     SyntaxError,
     MissingMainFunction,
+    MissingComptimeParam(String),
 }
 
 impl MXDiagnosticKind {
@@ -29,6 +28,9 @@ impl MXDiagnosticKind {
         match self {
             MXDiagnosticKind::SyntaxError => "Syntax error".to_string(),
             MXDiagnosticKind::MissingMainFunction => "Missing main function".to_string(),
+            MXDiagnosticKind::MissingComptimeParam(name) => {
+                format!("Missing comptime param '{}'", name)
+            }
         }
     }
 }

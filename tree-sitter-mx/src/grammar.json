@@ -68,13 +68,13 @@
                 },
                 {
                   "type": "FIELD",
-                  "name": "comptime_parameters",
+                  "name": "comptime_params",
                   "content": {
                     "type": "CHOICE",
                     "members": [
                       {
                         "type": "SYMBOL",
-                        "name": "parameter_list"
+                        "name": "param_list"
                       },
                       {
                         "type": "BLANK"
@@ -99,13 +99,13 @@
         },
         {
           "type": "FIELD",
-          "name": "parameters",
+          "name": "params",
           "content": {
             "type": "CHOICE",
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "parameter_list"
+                "name": "param_list"
               },
               {
                 "type": "BLANK"
@@ -300,10 +300,10 @@
                 },
                 {
                   "type": "FIELD",
-                  "name": "comptime_parameters",
+                  "name": "comptime_params",
                   "content": {
                     "type": "SYMBOL",
-                    "name": "parameter_list"
+                    "name": "param_list"
                   }
                 },
                 {
@@ -1600,12 +1600,12 @@
         ]
       }
     },
-    "parameter_list": {
+    "param_list": {
       "type": "SEQ",
       "members": [
         {
           "type": "SYMBOL",
-          "name": "parameter"
+          "name": "param"
         },
         {
           "type": "REPEAT",
@@ -1618,7 +1618,7 @@
               },
               {
                 "type": "SYMBOL",
-                "name": "parameter"
+                "name": "param"
               }
             ]
           }
@@ -1637,7 +1637,7 @@
         }
       ]
     },
-    "parameter": {
+    "param": {
       "type": "SEQ",
       "members": [
         {

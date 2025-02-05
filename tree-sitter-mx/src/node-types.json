@@ -716,12 +716,12 @@
           }
         ]
       },
-      "comptime_parameters": {
+      "comptime_params": {
         "multiple": false,
         "required": false,
         "types": [
           {
-            "type": "parameter_list",
+            "type": "param_list",
             "named": true
           }
         ]
@@ -736,12 +736,12 @@
           }
         ]
       },
-      "parameters": {
+      "params": {
         "multiple": false,
         "required": false,
         "types": [
           {
-            "type": "parameter_list",
+            "type": "param_list",
             "named": true
           }
         ]
@@ -1036,7 +1036,7 @@
     }
   },
   {
-    "type": "parameter",
+    "type": "param",
     "named": true,
     "fields": {
       "name": {
@@ -1110,7 +1110,7 @@
     }
   },
   {
-    "type": "parameter_list",
+    "type": "param_list",
     "named": true,
     "fields": {},
     "children": {
@@ -1118,7 +1118,7 @@
       "required": true,
       "types": [
         {
-          "type": "parameter",
+          "type": "param",
           "named": true
         }
       ]
@@ -1316,12 +1316,12 @@
           }
         ]
       },
-      "comptime_parameters": {
+      "comptime_params": {
         "multiple": false,
         "required": false,
         "types": [
           {
-            "type": "parameter_list",
+            "type": "param_list",
             "named": true
           }
         ]
