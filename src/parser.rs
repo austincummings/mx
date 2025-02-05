@@ -1,49 +1,25 @@
-use tree_sitter::{Node, Tree};
+use tree_sitter::{Language, Node, Tree};
 
-extern "C" {
-    pub fn tree_sitter_mx() -> tree_sitter::Language;
-}
-
-#[derive(Debug, Clone)]
-pub struct Location {
-    pub start: (usize, usize),
-    pub end: (usize, usize),
-}
-
-#[derive(Debug, Clone)]
-pub enum ParseError {
-    SyntaxError { location: Location },
-}
-
-impl ParseError {
-    pub fn message(&self) -> String {
-        match self {
-            ParseError::SyntaxError { location: _ } => "Syntax error".to_string(),
-        }
-    }
-
-    pub fn location(&self) -> Location {
-        match self {
-            ParseError::SyntaxError { location } => location.clone(),
-        }
-    }
-}
+use crate::diag::{MXDiagnostic, MXDiagnosticKind, MXDiagnosticSeverity, MXLocation};
 
 pub struct MXParser {
-    diagnostics: Vec<ParseError>,
+    language: Language,
+    diagnostics: Vec<MXDiagnostic>,
+    tree: Option<Tree>,
 }
 
 impl MXParser {
-    pub fn new() -> Self {
+    pub fn new(language: Language) -> Self {
         Self {
+            language,
             diagnostics: vec![],
+            tree: None,
         }
     }
 
-    pub fn parse(&mut self, input: &str) -> Tree {
-        let language = unsafe { tree_sitter_mx() };
+    pub fn parse(&mut self, input: &str) {
         let mut ts_parser = tree_sitter::Parser::new();
-        ts_parser.set_language(&language).unwrap();
+        ts_parser.set_language(&self.language).unwrap();
 
         let tree = ts_parser.parse(input, None).unwrap();
 
@@ -61,11 +37,13 @@ impl MXParser {
                 let start_col = node.start_position().column;
                 let end_line = node.end_position().row;
                 let end_col = node.end_position().column;
-                let diag = ParseError::SyntaxError {
-                    location: Location {
-                        start: (start_line, start_col),
-                        end: (end_line, end_col),
+                let diag = MXDiagnostic {
+                    location: MXLocation {
+                        start: (start_line as usize, start_col as usize),
+                        end: (end_line as usize, end_col as usize),
                     },
+                    severity: MXDiagnosticSeverity::Error,
+                    kind: MXDiagnosticKind::SyntaxError,
                 };
                 self.diagnostics.push(diag);
             }
@@ -75,10 +53,34 @@ impl MXParser {
             }
         }
 
-        tree
+        self.tree = Some(tree.clone());
     }
 
-    pub fn diagnostics(&self) -> Vec<ParseError> {
+    pub fn get_node_at_position(&self, line: usize, col: usize) -> Option<Node> {
+        let tree = self.tree.as_ref().unwrap();
+        let mut stack = vec![(tree.root_node(), 0)];
+        while let Some((node, _)) = stack.pop() {
+            if node.start_position().row <= line
+                && node.start_position().column <= col
+                && node.end_position().row >= line
+                && node.end_position().column >= col
+            {
+                return Some(node);
+            }
+
+            for i in (0..node.child_count()).rev() {
+                stack.push((node.child(i).unwrap(), 0));
+            }
+        }
+
+        None
+    }
+
+    pub fn tree(&self) -> Tree {
+        self.tree.clone().unwrap()
+    }
+
+    pub fn diagnostics(&self) -> Vec<MXDiagnostic> {
         self.diagnostics.clone()
     }
 }
