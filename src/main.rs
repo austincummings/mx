@@ -4,12 +4,11 @@ mod parser;
 mod sema;
 mod server;
 
-use parser::Parser;
+use parser::MXParser;
 use sema::Sema;
 use server::MXLanguageServer;
+use std::io::Read as _;
 use std::io::*;
-use std::sync::{Arc, Mutex};
-use std::{collections::HashMap, io::Read as _};
 use tower_lsp::{LspService, Server};
 
 // fn main() {
@@ -54,7 +53,7 @@ async fn main() {
             stdin().read_to_string(&mut input).unwrap();
 
             // Instantiate the parser
-            let parser = Parser::new();
+            let mut parser = MXParser::new();
 
             // Parse the input
             let tree = parser.parse(&input);

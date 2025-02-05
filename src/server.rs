@@ -4,6 +4,8 @@ use tokio::sync::Mutex;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer};
 
+use crate::parser::MXParser;
+
 #[derive(Debug)]
 pub struct MXLanguageServer {
     pub client: Client,
@@ -16,6 +18,35 @@ impl MXLanguageServer {
             client,
             documents: Arc::new(Mutex::new(HashMap::new())),
         }
+    }
+
+    fn gather_diagnostics(&self, text: &str) -> Vec<Diagnostic> {
+        let mut parser = MXParser::new();
+        let _tree = parser.parse(text);
+
+        let mut diagnostics = vec![];
+        for parse_error in parser.diagnostics() {
+            let range = Range {
+                start: Position {
+                    line: parse_error.location().start.0 as u32,
+                    character: parse_error.location().start.1 as u32,
+                },
+                end: Position {
+                    line: parse_error.location().end.0 as u32,
+                    character: parse_error.location().end.1 as u32,
+                },
+            };
+            let diag = Diagnostic {
+                range,
+                severity: Some(DiagnosticSeverity::ERROR),
+                message: parse_error.message(),
+                ..Default::default()
+            };
+
+            diagnostics.push(diag);
+        }
+
+        diagnostics
     }
 }
 
@@ -39,7 +70,7 @@ impl LanguageServer for MXLanguageServer {
                 ..ServerCapabilities::default()
             },
             server_info: Some(ServerInfo {
-                name: "Basic MX LSP".into(),
+                name: "MX Language Server".into(),
                 version: Some("0.1.0".into()),
             }),
         })
@@ -57,31 +88,7 @@ impl LanguageServer for MXLanguageServer {
             .await
             .insert(uri.to_string(), text.clone());
 
-        let diagnostics = text
-            .lines()
-            .enumerate()
-            .filter_map(|(line_num, line)| {
-                if line.contains("TODO") {
-                    Some(Diagnostic {
-                        range: Range {
-                            start: Position {
-                                line: line_num as u32,
-                                character: line.find("TODO").unwrap() as u32,
-                            },
-                            end: Position {
-                                line: line_num as u32,
-                                character: (line.find("TODO").unwrap() as u32) + 4,
-                            },
-                        },
-                        severity: Some(DiagnosticSeverity::WARNING),
-                        message: "Test".to_string(),
-                        ..Diagnostic::default()
-                    })
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
+        let diagnostics = self.gather_diagnostics(&text);
 
         self.client
             .publish_diagnostics(uri, diagnostics, None)
@@ -107,31 +114,7 @@ impl LanguageServer for MXLanguageServer {
             .cloned()
             .unwrap_or_default();
 
-        let diagnostics = text
-            .lines()
-            .enumerate()
-            .filter_map(|(line_num, line)| {
-                if line.contains("TODO") {
-                    Some(Diagnostic {
-                        range: Range {
-                            start: Position {
-                                line: line_num as u32,
-                                character: line.find("TODO").unwrap() as u32,
-                            },
-                            end: Position {
-                                line: line_num as u32,
-                                character: (line.find("TODO").unwrap() as u32) + 4,
-                            },
-                        },
-                        severity: Some(DiagnosticSeverity::WARNING),
-                        message: "Hetest".to_string(),
-                        ..Diagnostic::default()
-                    })
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
+        let diagnostics = self.gather_diagnostics(&text);
 
         self.client
             .publish_diagnostics(uri, diagnostics, None)
