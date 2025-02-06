@@ -6,6 +6,7 @@ use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer};
 use tree_sitter::Language;
 
+use crate::diag::MXPosition;
 use crate::parser::MXParser;
 use crate::sema::Sema;
 
@@ -170,12 +171,33 @@ impl LanguageServer for MXLanguageServer {
         let text = documents.get(&uri.to_string()).unwrap();
         parser.parse(text);
 
+        let mut sema = Sema::new(parser.nodes.clone());
+        sema.analyze();
+
+        let pos = MXPosition {
+            row: line as usize,
+            col: character as usize,
+        };
+
+        let node_ref = parser.find_node_at_position(pos);
+        if node_ref.is_none() {
+            return Ok(None);
+        }
+        let node = parser.nodes.get(node_ref.unwrap().0 as usize).unwrap();
+
+        // Find the MXIRNode that corresponds to the node
+        let mut sema_node = None;
+        for ir_node in &sema.mxir {
+            if ir_node.ast_ref == node.self_ref {
+                sema_node = Some(ir_node);
+                break;
+            }
+        }
+
         Ok(Some(Hover {
             contents: HoverContents::Scalar(MarkedString::String(format!(
-                "## Location\n{} {}:{}",
-                uri.to_string(),
-                line + 1,
-                character + 1,
+                "Node: {}\nNodeRef: {:?}\nURI: {}\nLine: {}\nCharacter: {}\nSema: {:#?}",
+                node.kind, node.self_ref, uri, line, character, sema_node
             ))),
             range: None,
         }))

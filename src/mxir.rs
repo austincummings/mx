@@ -7,7 +7,7 @@ use crate::{parser::AstNodeRef, sema::ComptimeValue};
 /// ComptimeInt node with the value 1.
 pub struct MXIR(pub Vec<MXIRNode>);
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct MXIRNodeRef(pub u32);
 
 #[derive(Debug, Clone)]

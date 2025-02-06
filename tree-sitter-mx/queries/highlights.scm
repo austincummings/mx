@@ -40,6 +40,15 @@
 ((identifier) @variable.builtin
   (#eq? @variable.builtin "import"))
 
+((identifier) @variable.builtin
+  (#eq? @variable.builtin "ref"))
+
+((identifier) @variable.builtin
+  (#eq? @variable.builtin "mutref"))
+
+((identifier) @variable.builtin
+  (#eq? @variable.builtin "deref"))
+
 [
  "fn"
  "if"

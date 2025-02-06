@@ -4,7 +4,7 @@ use tree_sitter::{Language, Node, Tree};
 
 use crate::diag::{MXDiagnostic, MXDiagnosticKind, MXPosition, MXRange};
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct AstNodeRef(pub u32);
 
 #[derive(Debug, Clone)]
@@ -102,5 +102,38 @@ impl MXParser {
 
     pub fn diagnostics(&self) -> Vec<MXDiagnostic> {
         self.diagnostics.clone()
+    }
+
+    pub fn find_node_at_position(&self, pos: MXPosition) -> Option<AstNodeRef> {
+        let root_node_ref = AstNodeRef(0); // Assuming root node is always at index 0
+        self.find_deepest_matching_node(root_node_ref, pos)
+    }
+
+    fn find_deepest_matching_node(
+        &self,
+        node_ref: AstNodeRef,
+        pos: MXPosition,
+    ) -> Option<AstNodeRef> {
+        let node = self.nodes.get(node_ref.0 as usize)?;
+
+        // If the node does not contain the position, return None
+        if !self.position_in_range(pos, &node.range) {
+            return None;
+        }
+
+        // Search children for a more specific match
+        for &child_ref in &node.children {
+            if let Some(found_ref) = self.find_deepest_matching_node(child_ref, pos) {
+                return Some(found_ref);
+            }
+        }
+
+        // No deeper match, return current node
+        Some(node_ref)
+    }
+
+    fn position_in_range(&self, pos: MXPosition, range: &MXRange) -> bool {
+        (range.start.row < pos.row || (range.start.row == pos.row && range.start.col <= pos.col))
+            && (range.end.row > pos.row || (range.end.row == pos.row && range.end.col >= pos.col))
     }
 }

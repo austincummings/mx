@@ -2,3 +2,7 @@ fn print(s: ComptimeString): 0 {
     c_call["printf"](s);
     return 0;
 }
+
+fn main(): 0 {
+    return 0;
+}

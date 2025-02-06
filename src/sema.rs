@@ -13,7 +13,7 @@ pub struct ComptimeEnvRef(pub u32);
 pub struct ComptimeEnv {
     pub self_ref: ComptimeEnvRef,
     pub parent: Option<ComptimeEnvRef>,
-    pub bindings: HashMap<String, ComptimeValue>,
+    pub bindings: HashMap<String, ComptimeBinding>,
 }
 
 impl ComptimeEnv {
@@ -25,8 +25,21 @@ impl ComptimeEnv {
         }
     }
 
-    pub fn bind(&mut self, name: String, value: ComptimeValue) {
-        self.bindings.insert(name, value);
+    pub fn bind(&mut self, name: String, value: Option<ComptimeValue>) -> Result<(), ()> {
+        if self.bindings.contains_key(&name) {
+            return Err(());
+        }
+
+        self.bindings.insert(
+            name.clone(),
+            ComptimeBinding {
+                name,
+                ty: None,
+                value,
+            },
+        );
+
+        Ok(())
     }
 
     pub fn lookup(&self, envs: &Vec<ComptimeEnv>, name: &str) -> Option<ComptimeEnvRef> {
@@ -43,11 +56,20 @@ impl ComptimeEnv {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct ComptimeBinding {
+    pub name: String,
+    pub ty: Option<ComptimeValue>,
+    pub value: Option<ComptimeValue>,
+}
+
 #[derive(Debug)]
 pub struct Sema {
     nodes: Vec<AstNode>,
     diagnostics: Vec<MXDiagnostic>,
-    mxir: Vec<MXIRNode>,
+    pub mxir: Vec<MXIRNode>,
+    envs: Vec<ComptimeEnv>,
+    current_env: ComptimeEnvRef,
 }
 
 impl Sema {
@@ -56,7 +78,31 @@ impl Sema {
             nodes,
             diagnostics: vec![],
             mxir: vec![],
+            envs: vec![ComptimeEnv::new(None)],
+            current_env: ComptimeEnvRef(0),
         }
+    }
+
+    fn push_env(&mut self) -> ComptimeEnvRef {
+        let parent = Some(self.current_env);
+        let env = ComptimeEnv::new(parent);
+        self.envs.push(env);
+        self.current_env = ComptimeEnvRef(self.envs.len() as u32 - 1);
+        self.current_env
+    }
+
+    fn pop_env(&mut self) -> ComptimeEnvRef {
+        if let Some(parent) = self.envs[self.current_env.0 as usize].parent {
+            self.current_env = parent;
+            return self.current_env;
+        } else {
+            panic!("Cannot pop the root environment");
+        }
+    }
+
+    fn declare(&mut self, name: String, value: Option<ComptimeValue>) {
+        let current_env = &mut self.envs[self.current_env.0 as usize];
+        current_env.bind(name, value).unwrap();
     }
 
     pub fn analyze(&mut self) {
@@ -68,25 +114,38 @@ impl Sema {
     fn analyze_entrypoint(&mut self) {
         if let Some(entrypoint_node_ref) = self.find_entrypoint_node() {
             self.analyze_fn(entrypoint_node_ref);
+        } else {
+            self.report_missing_main_function();
         }
 
         eprintln!("{:#?}", self.mxir);
+
+        for env in &self.envs {
+            eprintln!("{:#?}", env);
+        }
     }
 
-    fn analyze_fn(&mut self, node_ref: AstNodeRef) {
+    fn analyze_fn(&mut self, node_ref: AstNodeRef) -> MXIRNodeRef {
         let node = self.node(node_ref).clone();
         assert!(node.kind == "fn_decl");
+
+        let name_node = self.node(*node.named_children.get("name").unwrap());
+        let name = name_node.text.clone();
 
         let body_node = self.node(*node.named_children.get("body").unwrap());
         let block_mxir_ref = self.analyze_block(body_node.self_ref);
 
+        self.declare(name.clone(), None);
+
         let self_ref = MXIRNodeRef(self.mxir.len() as u32);
-        self.emit(MXIRNode::fn_(self_ref, node_ref, vec![], block_mxir_ref));
+        self.emit(MXIRNode::fn_(self_ref, node_ref, vec![], block_mxir_ref))
     }
 
     fn analyze_block(&mut self, node_ref: AstNodeRef) -> MXIRNodeRef {
         let node = self.node(node_ref).clone();
         assert!(node.kind == "block");
+
+        self.push_env();
 
         let mut children_refs = vec![];
         for child_ref in node.children {
@@ -97,6 +156,8 @@ impl Sema {
                 children_refs.push(child_mxir_ref);
             }
         }
+
+        self.pop_env();
 
         let self_ref = MXIRNodeRef(self.mxir.len() as u32);
         self.emit(MXIRNode::block(self_ref, node_ref, children_refs))
@@ -133,6 +194,8 @@ impl Sema {
 
         let value_node = self.node(*node.named_children.get("value").unwrap());
         let value_val = self.comptime_eval(value_node.self_ref);
+
+        self.declare(name.clone(), Some(value_val));
 
         let self_ref = MXIRNodeRef(self.mxir.len() as u32);
         self.emit(MXIRNode::nop(self_ref, node_ref))
@@ -410,4 +473,5 @@ pub enum ComptimeValue {
     ComptimeFloat(f64),
     ComptimeBool(bool),
     ComptimeString(String),
+    Function,
 }
