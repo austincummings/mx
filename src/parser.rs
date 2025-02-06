@@ -5,21 +5,23 @@ use tree_sitter::{Language, Node, Tree};
 use crate::diag::{MXDiagnostic, MXDiagnosticKind, MXPosition, MXRange};
 
 #[derive(Debug, Copy, Clone)]
-pub struct MXNodeRef(pub u32);
+pub struct AstNodeRef(pub u32);
 
 #[derive(Debug, Clone)]
-pub struct MXNode {
-    pub self_ref: MXNodeRef,
+pub struct AstNode {
+    pub self_ref: AstNodeRef,
     pub kind: String,
+    pub named: bool,
     pub range: MXRange,
     pub text: String,
-    pub named_children: HashMap<String, MXNodeRef>,
+    pub named_children: HashMap<String, AstNodeRef>,
+    pub children: Vec<AstNodeRef>,
 }
 
 pub struct MXParser {
     language: Language,
     diagnostics: Vec<MXDiagnostic>,
-    pub nodes: Vec<MXNode>,
+    pub nodes: Vec<AstNode>,
 }
 
 impl MXParser {
@@ -31,7 +33,7 @@ impl MXParser {
         }
     }
 
-    fn walk_tree(&mut self, node: tree_sitter::Node, source: &str) -> MXNodeRef {
+    fn walk_tree(&mut self, node: tree_sitter::Node, source: &str) -> AstNodeRef {
         let start = node.start_position();
         let end = node.end_position();
 
@@ -48,39 +50,38 @@ impl MXParser {
 
         let text = &source[node.start_byte()..node.end_byte()];
 
-        // If it's an error, add a diagnostic
+        // Create the node first and get its reference
+        let node_ref = AstNodeRef(self.nodes.len() as u32);
+        self.nodes.push(AstNode {
+            self_ref: node_ref,
+            kind: node.kind().to_string(),
+            named: node.is_named(),
+            range: mx_range,
+            text: text.to_string(),
+            children: vec![],
+            named_children: HashMap::new(),
+        });
+
+        // Report any syntax errors
         if node.is_error() {
             self.diagnostics.push(MXDiagnostic {
-                range: mx_range.clone(),
                 kind: MXDiagnosticKind::SyntaxError,
+                range: mx_range,
             });
         }
 
-        let node_ref = MXNodeRef(self.nodes.len() as u32);
-        let mx_node = MXNode {
-            self_ref: node_ref,
-            kind: node.kind().to_string(),
-            range: mx_range,
-            text: text.to_string(),
-            named_children: HashMap::new(),
-        };
-        self.nodes.push(mx_node);
-
-        // Traverse children
-        // for i in 0..node.child_count() {
-        //     if let Some(child) = node.child(i) {
-        //         let child_ref = self.walk_tree(child, source);
-        //         self.nodes[node_ref.0 as usize].children.push(child_ref);
-        //     }
-        // }
-        //
-        // Traverse named children and map them
-        for i in 0..node.named_child_count() {
-            if let Some(child) = node.named_child(i) {
+        // Traverse children once, adding them to both `children` and `named_children` if applicable
+        for i in 0..node.child_count() {
+            if let Some(child) = node.child(i) {
                 let child_ref = self.walk_tree(child, source);
-                self.nodes[node_ref.0 as usize]
-                    .named_children
-                    .insert(child.kind().to_string(), child_ref);
+                self.nodes[node_ref.0 as usize].children.push(child_ref);
+
+                // Get the field name for the child if it has one
+                if let Some(field_name) = node.field_name_for_child(i as u32) {
+                    self.nodes[node_ref.0 as usize]
+                        .named_children
+                        .insert(field_name.to_string(), child_ref);
+                }
             }
         }
 

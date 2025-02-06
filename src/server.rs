@@ -30,7 +30,7 @@ impl MXLanguageServer {
         let mut parser = MXParser::new(self.language.clone());
         parser.parse(text);
 
-        let mut sema = Sema::new(self.language.clone(), parser.nodes.clone(), text);
+        let mut sema = Sema::new(parser.nodes.clone());
         sema.analyze();
 
         let mut diagnostics = vec![];
@@ -55,26 +55,27 @@ impl MXLanguageServer {
             diagnostics.push(diag);
         }
 
-        // for sema_error in sema.diagnostics() {
-        //     let range = Range {
-        //         start: Position {
-        //             line: sema_error.point.start.0 as u32,
-        //             character: sema_error.point.start.1 as u32,
-        //         },
-        //         end: Position {
-        //             line: sema_error.point.end.0 as u32,
-        //             character: sema_error.point.end.1 as u32,
-        //         },
-        //     };
-        //     let diag = Diagnostic {
-        //         range,
-        //         severity: Some(DiagnosticSeverity::ERROR),
-        //         message: sema_error.kind.message(),
-        //         ..Default::default()
-        //     };
-        //
-        //     diagnostics.push(diag);
-        // }
+        for sema_error in sema.diagnostics() {
+            let range = Range {
+                start: Position {
+                    line: sema_error.range.start.row as u32,
+                    character: sema_error.range.start.col as u32,
+                },
+                end: Position {
+                    line: sema_error.range.end.row as u32,
+                    character: sema_error.range.end.col as u32,
+                },
+            };
+
+            let diag = Diagnostic {
+                range,
+                severity: Some(DiagnosticSeverity::ERROR),
+                message: sema_error.kind.message(),
+                ..Default::default()
+            };
+
+            diagnostics.push(diag);
+        }
 
         diagnostics
     }
@@ -169,18 +170,12 @@ impl LanguageServer for MXLanguageServer {
         let text = documents.get(&uri.to_string()).unwrap();
         parser.parse(text);
 
-        // let node = parser.get_node_at_position(line as usize, character as usize);
-        // if node.is_none() {
-        //     return Ok(None);
-        // }
-
         Ok(Some(Hover {
             contents: HoverContents::Scalar(MarkedString::String(format!(
-                "## Location\n{} {}:{}\n\n## Syntax Type\n`{}`",
+                "## Location\n{} {}:{}",
                 uri.to_string(),
                 line + 1,
                 character + 1,
-                "idk", //node.unwrap().kind()
             ))),
             range: None,
         }))

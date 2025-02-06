@@ -1,0 +1,4 @@
+fn print(s: ComptimeString): 0 {
+    c_call["printf"](s);
+    return 0;
+}

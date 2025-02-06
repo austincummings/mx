@@ -34,6 +34,12 @@
 ((identifier) @variable.builtin
   (#eq? @variable.builtin "comptime"))
 
+((identifier) @variable.builtin
+  (#eq? @variable.builtin "cast"))
+
+((identifier) @variable.builtin
+  (#eq? @variable.builtin "import"))
+
 [
  "fn"
  "if"
@@ -45,7 +51,8 @@
  "loop"
  "break"
  "continue"
- "comptime"
+ "new"
+ ; "comptime"
 ] @keyword
 
 [

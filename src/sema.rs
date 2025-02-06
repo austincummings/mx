@@ -1,49 +1,292 @@
 use std::collections::HashMap;
 
-use tree_sitter::{Language, Node, Tree};
-
 use crate::{
     diag::{MXDiagnostic, MXDiagnosticKind, MXPosition, MXRange},
-    parser::{MXNode, MXNodeRef},
-    query::query,
+    mxir::{MXIRNode, MXIRNodeRef},
+    parser::{AstNode, AstNodeRef},
 };
+
+#[derive(Debug, Copy, Clone)]
+pub struct ComptimeEnvRef(pub u32);
+
+#[derive(Debug, Clone)]
+pub struct ComptimeEnv {
+    pub self_ref: ComptimeEnvRef,
+    pub parent: Option<ComptimeEnvRef>,
+    pub bindings: HashMap<String, ComptimeValue>,
+}
+
+impl ComptimeEnv {
+    pub fn new(parent: Option<ComptimeEnvRef>) -> Self {
+        Self {
+            self_ref: ComptimeEnvRef(0),
+            parent,
+            bindings: HashMap::new(),
+        }
+    }
+
+    pub fn bind(&mut self, name: String, value: ComptimeValue) {
+        self.bindings.insert(name, value);
+    }
+
+    pub fn lookup(&self, envs: &Vec<ComptimeEnv>, name: &str) -> Option<ComptimeEnvRef> {
+        if let Some(value) = self.bindings.get(name) {
+            return Some(self.self_ref);
+        }
+
+        if let Some(parent_ref) = self.parent {
+            let parent = &envs[parent_ref.0 as usize];
+            return parent.lookup(envs, name);
+        }
+
+        None
+    }
+}
 
 #[derive(Debug)]
 pub struct Sema {
-    src: String,
-    language: Language,
-    nodes: Vec<MXNode>,
+    nodes: Vec<AstNode>,
     diagnostics: Vec<MXDiagnostic>,
+    mxir: Vec<MXIRNode>,
 }
 
 impl Sema {
-    pub fn new(language: Language, nodes: Vec<MXNode>, src: &str) -> Self {
+    pub fn new(nodes: Vec<AstNode>) -> Self {
         Self {
-            language,
             nodes,
-            src: src.to_string(),
             diagnostics: vec![],
+            mxir: vec![],
         }
     }
 
     pub fn analyze(&mut self) {
-        // Find main function
-        let entrypoint_node = self.find_entrypoint_node();
-        eprintln!("{:?}", entrypoint_node);
-        if let Some(node) = entrypoint_node.clone() {
-            // Check if the main function has comptime params
-            // let comptime_args = HashMap::new();
-            // self.comptime_instantiate_fn(node, comptime_args);
-        } else {
-            self.report_missing_main_function();
+        // Push a nop as the 0th node
+        self.emit(MXIRNode::nop(MXIRNodeRef(0), AstNodeRef(0)));
+        self.analyze_entrypoint();
+    }
+
+    fn analyze_entrypoint(&mut self) {
+        if let Some(entrypoint_node_ref) = self.find_entrypoint_node() {
+            self.analyze_fn(entrypoint_node_ref);
+        }
+
+        eprintln!("{:#?}", self.mxir);
+    }
+
+    fn analyze_fn(&mut self, node_ref: AstNodeRef) {
+        let node = self.node(node_ref).clone();
+        assert!(node.kind == "fn_decl");
+
+        let body_node = self.node(*node.named_children.get("body").unwrap());
+        let block_mxir_ref = self.analyze_block(body_node.self_ref);
+
+        let self_ref = MXIRNodeRef(self.mxir.len() as u32);
+        self.emit(MXIRNode::fn_(self_ref, node_ref, vec![], block_mxir_ref));
+    }
+
+    fn analyze_block(&mut self, node_ref: AstNodeRef) -> MXIRNodeRef {
+        let node = self.node(node_ref).clone();
+        assert!(node.kind == "block");
+
+        let mut children_refs = vec![];
+        for child_ref in node.children {
+            let child_node = self.node(child_ref).clone();
+
+            if child_node.named {
+                let child_mxir_ref = self.analyze_block_inner(child_node.self_ref);
+                children_refs.push(child_mxir_ref);
+            }
+        }
+
+        let self_ref = MXIRNodeRef(self.mxir.len() as u32);
+        self.emit(MXIRNode::block(self_ref, node_ref, children_refs))
+    }
+
+    fn analyze_block_inner(&mut self, node_ref: AstNodeRef) -> MXIRNodeRef {
+        let node = self.node(node_ref).clone();
+
+        match node.kind.as_str() {
+            "const_decl" => self.analyze_const_decl(node_ref),
+            "return_stmt" => self.analyze_return_stmt(node_ref),
+            "expr_stmt" => self.analyze_expr_stmt(node_ref),
+            _ => {
+                self.report(
+                    node.range.clone(),
+                    MXDiagnosticKind::Unimplemented(node.kind.clone()),
+                );
+                MXIRNodeRef(0)
+            }
         }
     }
 
-    fn find_entrypoint_node(&self) -> Option<MXNodeRef> {
+    fn analyze_const_decl(&mut self, node_ref: AstNodeRef) -> MXIRNodeRef {
+        let node = self.node(node_ref).clone();
+        assert!(node.kind == "const_decl");
+
+        let name_node = self.node(*node.named_children.get("name").unwrap());
+        let name = name_node.text.clone();
+
+        if let Some(ty_node_ref) = node.named_children.get("type") {
+            let ty_node = self.node(*ty_node_ref);
+            let ty_val = self.comptime_eval(ty_node.self_ref);
+        }
+
+        let value_node = self.node(*node.named_children.get("value").unwrap());
+        let value_val = self.comptime_eval(value_node.self_ref);
+
+        let self_ref = MXIRNodeRef(self.mxir.len() as u32);
+        self.emit(MXIRNode::nop(self_ref, node_ref))
+    }
+
+    fn analyze_return_stmt(&mut self, node_ref: AstNodeRef) -> MXIRNodeRef {
+        let node = self.node(node_ref).clone();
+        assert!(node.kind == "return_stmt");
+
+        let expr_node = self.node(*node.named_children.get("expr").unwrap());
+        let expr_val = self.analyze_expr(expr_node.self_ref);
+
+        let self_ref = MXIRNodeRef(self.mxir.len() as u32);
+        self.emit(MXIRNode::return_stmt(self_ref, node_ref, expr_val))
+    }
+
+    fn analyze_expr_stmt(&mut self, node_ref: AstNodeRef) -> MXIRNodeRef {
+        let node = self.node(node_ref).clone();
+        assert!(node.kind == "expr_stmt");
+
+        let expr_node = self.node(*node.named_children.get("expr").unwrap());
+        let expr_val = self.analyze_expr(expr_node.self_ref);
+
+        let self_ref = MXIRNodeRef(self.mxir.len() as u32);
+        self.emit(MXIRNode::expr_stmt(self_ref, node_ref, expr_val))
+    }
+
+    fn analyze_expr(&mut self, node_ref: AstNodeRef) -> MXIRNodeRef {
+        let node = self.node(node_ref).clone();
+
+        let mxir_node = match node.kind.as_str() {
+            "int_literal" => self.analyze_comptime_expr(node_ref),
+            "float_literal" => self.analyze_comptime_expr(node_ref),
+            "bool_literal" => self.analyze_comptime_expr(node_ref),
+            "string_literal" => self.analyze_comptime_expr(node_ref),
+            "call_expr" => self.analyze_call_expr(node_ref),
+            "variable_expr" => {
+                self.report(
+                    node.range.clone(),
+                    MXDiagnosticKind::Unimplemented("variable_expr".to_string()),
+                );
+                return MXIRNodeRef(0);
+            }
+            "comptime_call_expr" => {
+                self.report(
+                    node.range.clone(),
+                    MXDiagnosticKind::Unimplemented("need to impl comptime_call_expr".to_string()),
+                );
+                return MXIRNodeRef(0);
+            }
+            "comptime_expr" => {
+                // Get the expr node ref
+                let expr_node_ref = *node.children.get(0).unwrap();
+                self.analyze_comptime_expr(expr_node_ref)
+            }
+            _ => {
+                self.report(
+                    node.range.clone(),
+                    MXDiagnosticKind::Unimplemented(node.kind.clone()),
+                );
+                return MXIRNodeRef(0);
+            }
+        };
+
+        mxir_node
+    }
+
+    fn analyze_call_expr(&mut self, node_ref: AstNodeRef) -> MXIRNodeRef {
+        let node = self.node(node_ref).clone();
+        assert!(node.kind == "call_expr");
+
+        let callee_node = self.node(*node.named_children.get("callee").unwrap());
+        let callee_val = self.analyze_expr(callee_node.self_ref);
+
+        let mut args = vec![];
+        if let Some(args_node_ref) = node.named_children.get("arguments") {
+            let args_node = self.node(*args_node_ref).clone();
+            for arg_ref in &args_node.children {
+                let arg_val = self.analyze_expr(*arg_ref);
+                args.push(arg_val);
+            }
+        }
+
+        let self_ref = MXIRNodeRef(self.mxir.len() as u32);
+        self.emit(MXIRNode::call_expr(self_ref, node_ref, callee_val, args))
+    }
+
+    fn analyze_comptime_expr(&mut self, node_ref: AstNodeRef) -> MXIRNodeRef {
+        let node = self.node(node_ref).clone();
+
+        match node.kind.as_str() {
+            "int_literal" => {
+                let value = self.comptime_eval(node_ref);
+                let self_ref = MXIRNodeRef(self.mxir.len() as u32);
+                self.emit(MXIRNode::comptime_int(self_ref, node_ref, value))
+            }
+            "float_literal" => {
+                let value = self.comptime_eval(node_ref);
+                let self_ref = MXIRNodeRef(self.mxir.len() as u32);
+                self.emit(MXIRNode::comptime_float(self_ref, node_ref, value))
+            }
+            "bool_literal" => {
+                let value = self.comptime_eval(node_ref);
+                let self_ref = MXIRNodeRef(self.mxir.len() as u32);
+                self.emit(MXIRNode::comptime_bool(self_ref, node_ref, value))
+            }
+            "string_literal" => {
+                let value = self.comptime_eval(node_ref);
+                let self_ref = MXIRNodeRef(self.mxir.len() as u32);
+                self.emit(MXIRNode::comptime_string(self_ref, node_ref, value))
+            }
+            "variable_expr" => {
+                self.report(
+                    node.range.clone(),
+                    MXDiagnosticKind::Unimplemented("variable_expr".to_string()),
+                );
+                return MXIRNodeRef(0);
+            }
+            "member_expr" => self.analyze_comptime_member_expr(node_ref),
+            "comptime_expr" => {
+                // Get the expr node ref
+                let expr_node_ref = *node.children.get(0).unwrap();
+                self.analyze_comptime_expr(expr_node_ref)
+            }
+            _ => {
+                self.report(
+                    node.range.clone(),
+                    MXDiagnosticKind::Unimplemented(node.kind.clone()),
+                );
+                return MXIRNodeRef(0);
+            }
+        }
+    }
+
+    fn analyze_comptime_member_expr(&mut self, node_ref: AstNodeRef) -> MXIRNodeRef {
+        let node = self.node(node_ref).clone();
+        assert!(node.kind == "member_expr");
+
+        let expr_node = self.node(*node.named_children.get("expr").unwrap());
+        let expr_val = self.analyze_comptime_expr(expr_node.self_ref);
+
+        let member = self
+            .node(*node.named_children.get("member").unwrap())
+            .text
+            .clone();
+
+        let self_ref = MXIRNodeRef(self.mxir.len() as u32);
+        self.emit(MXIRNode::member_expr(self_ref, node_ref, expr_val, member))
+    }
+
+    fn find_entrypoint_node(&self) -> Option<AstNodeRef> {
         for i in 0..self.nodes.len() {
             let node = &self.nodes[i];
             if node.kind == "fn_decl" {
-                eprintln!("{:?}", node);
                 if node.named_children.contains_key("name") {
                     let name_node_ref = node.named_children.get("name").unwrap();
                     let name_node = self.nodes[name_node_ref.0 as usize].clone();
@@ -59,85 +302,76 @@ impl Sema {
 
     fn comptime_instantiate_fn(
         &mut self,
-        node: Node,
+        node_ref: AstNodeRef,
         comptime_args: HashMap<String, ComptimeValue>,
     ) {
-        todo!()
-        // // Query the comptime_params
-        // let params_query = r#"
-        //     (fn_decl
-        //         comptime_params: (param_list)? @comptime_params
-        //     )
-        // "#;
-        //
-        // let mut comptime_params = HashMap::new();
-        //
-        // let params_nodes = query(node, &self.src, &self.language, params_query, true);
-        // if params_nodes.contains_key("comptime_params") {
-        //     let comptime_params_node = params_nodes.get("comptime_params").unwrap()[0];
-        //     // Iterate over children of the param_list
-        //     for i in 0..comptime_params_node.child_count() {
-        //         let param_node = comptime_params_node.child(i).unwrap();
-        //         if param_node.kind() == "param" {
-        //             let param_query = r#"
-        //                 (param
-        //                     name: (identifier) @name
-        //                     type: (_) @type
-        //                 )
-        //             "#;
-        //             let param_nodes =
-        //                 query(param_node, &self.src, &self.language, param_query, true);
-        //
-        //             let name = param_nodes.get("name").unwrap()[0];
-        //             let type_node = param_nodes.get("type").unwrap()[0];
-        //
-        //             let name = name.utf8_text(self.src.as_bytes()).unwrap().to_string();
-        //
-        //             let comptime_param = ComptimeParam {
-        //                 name: name.clone(),
-        //                 type_: self.comptime_eval(type_node),
-        //                 value: None,
-        //             };
-        //
-        //             comptime_params.insert(name, comptime_param.clone());
-        //         }
-        //     }
-        // }
-        //
-        // // Check if all comptime params are provided
-        // for (name, param) in comptime_params.iter() {
-        //     if !comptime_args.contains_key(name) {
-        //         self.report(
-        //             MXPoint {
-        //                 start: (0, 0),
-        //                 end: (0, 0),
-        //             },
-        //             MXDiagnosticKind::MissingComptimeParam(name.clone()),
-        //         );
-        //     }
-        // }
+        let node = self.nodes[node_ref.0 as usize].clone();
+        // Get the comptime params definition
+
+        let mut comptime_params = HashMap::new();
+        if let Some(comptime_params_ref) = node.named_children.get("comptime_params") {
+            let comptime_params_node = self.node(*comptime_params_ref);
+            // Iterate over the children, each is a param
+            for param_ref in &comptime_params_node.children.clone() {
+                let param_node = self.node(*param_ref);
+                let name = self.node(*param_node.named_children.get("name").unwrap());
+                let ty = self.node(*param_node.named_children.get("type").unwrap());
+
+                let name_str = name.text.clone();
+                let ty_val = self.comptime_eval(ty.self_ref);
+
+                let comptime_param = ComptimeParam {
+                    name: name_str.clone(),
+                    type_: ty_val,
+                    value: None,
+                };
+
+                comptime_params.insert(name_str, comptime_param);
+            }
+        }
+
+        // Bind the comptime args to the params values
+        for (name, value) in comptime_args {
+            if let Some(param) = comptime_params.get_mut(&name) {
+                param.value = Some(value);
+            }
+        }
+
+        // Ensure all comptime params have a value
+        for (name, param) in &comptime_params {
+            if param.value.is_none() {
+                self.report(
+                    node.range.clone(),
+                    MXDiagnosticKind::MissingComptimeParam(name.clone()),
+                );
+            }
+        }
     }
 
-    fn comptime_eval(&self, node: Node) -> ComptimeValue {
-        match node.kind() {
-            "int_literal" => {
-                let text = node.utf8_text(self.src.as_bytes()).unwrap();
-                ComptimeValue::ComptimeInt(text.parse().unwrap())
+    fn comptime_eval(&mut self, node_ref: AstNodeRef) -> ComptimeValue {
+        let node = self.node(node_ref).clone();
+        match node.kind.as_str() {
+            "int_literal" => ComptimeValue::ComptimeInt(node.text.parse().unwrap()),
+            "float_literal" => ComptimeValue::ComptimeFloat(node.text.parse().unwrap()),
+            "bool_literal" => ComptimeValue::ComptimeBool(node.text.parse().unwrap()),
+            "string_literal" => ComptimeValue::ComptimeString(node.text.to_string()),
+            "comptime_expr" => {
+                let expr_node_ref = *node.children.get(0).unwrap();
+                self.comptime_eval(expr_node_ref)
             }
-            "float_literal" => {
-                let text = node.utf8_text(self.src.as_bytes()).unwrap();
-                ComptimeValue::ComptimeFloat(text.parse().unwrap())
+            _ => {
+                self.report(
+                    node.range.clone(),
+                    MXDiagnosticKind::Unimplemented(node.kind.clone()),
+                );
+                ComptimeValue::ComptimeInt(0)
             }
-            "bool_literal" => {
-                let text = node.utf8_text(self.src.as_bytes()).unwrap();
-                ComptimeValue::ComptimeBool(text.parse().unwrap())
-            }
-            "string_literal" => {
-                let text = node.utf8_text(self.src.as_bytes()).unwrap();
-                ComptimeValue::ComptimeString(text.to_string())
-            }
-            _ => unimplemented!(),
         }
+    }
+
+    fn emit(&mut self, node: MXIRNode) -> MXIRNodeRef {
+        self.mxir.push(node);
+        MXIRNodeRef(self.mxir.len() as u32 - 1)
     }
 
     pub fn diagnostics(&self) -> Vec<MXDiagnostic> {
@@ -156,6 +390,10 @@ impl Sema {
 
     fn report(&mut self, range: MXRange, kind: MXDiagnosticKind) {
         self.diagnostics.push(MXDiagnostic { range, kind });
+    }
+
+    fn node(&self, node_ref: AstNodeRef) -> &AstNode {
+        &self.nodes[node_ref.0 as usize]
     }
 }
 

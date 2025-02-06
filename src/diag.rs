@@ -1,10 +1,10 @@
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct MXPosition {
     pub row: usize,
     pub col: usize,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct MXRange {
     pub start: MXPosition,
     pub end: MXPosition,
@@ -21,6 +21,7 @@ pub enum MXDiagnosticKind {
     SyntaxError,
     MissingMainFunction,
     MissingComptimeParam(String),
+    Unimplemented(String),
 }
 
 impl MXDiagnosticKind {
@@ -31,6 +32,7 @@ impl MXDiagnosticKind {
             MXDiagnosticKind::MissingComptimeParam(name) => {
                 format!("Missing comptime param '{}'", name)
             }
+            MXDiagnosticKind::Unimplemented(what) => format!("Unimplemented: {}", what),
         }
     }
 }

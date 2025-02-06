@@ -81,7 +81,7 @@ module.exports = grammar({
 
     continue_stmt: $ => seq("continue", ";"),
 
-    return_stmt: $ => seq("return", field("expr", optional($._expr)), ";"),
+    return_stmt: $ => seq("return", field("expr", $._expr), ";"),
 
     if_stmt: $ => seq(
       "if",
@@ -127,6 +127,7 @@ module.exports = grammar({
       $.call_expr,
       $.member_expr,
       $.variable_expr,
+      $.struct_expr,
       $.group_expr,
       $.block,
     ),
@@ -140,6 +141,25 @@ module.exports = grammar({
     variable_expr: $ => $.identifier,
 
     group_expr: $ => prec(PREC.group, seq("(", $._expr, ")")),
+
+    struct_expr: $ => prec(PREC.struct, seq(
+      "new",
+      field("name", optional($.identifier)),
+      "{",
+      field("fields", optional($.struct_field_expr_list)),
+      "}",
+    )),
+
+    struct_field_expr_list: $ => seq(
+      $.struct_field_expr,
+      repeat(seq(",", $.struct_field_expr)),
+      optional(","),
+    ),
+
+    struct_field_expr: $ => seq(
+      field("name", $.identifier),
+      optional(seq(":", field("value", $._expr)))
+    ),
 
     unary_expr: $ => prec(PREC.unary, seq(
       field("operator", choice("-", "!")),
@@ -168,13 +188,13 @@ module.exports = grammar({
 
     comptime_call_expr: $ => prec.right(PREC.comptime_call, seq(
       field("callee", choice($._primary_expr)),
-      seq("[", field("comptime_arguments", $.expr_list), "]"),
+      seq("[", field("comptime_args", $.expr_list), "]"),
     )),
 
     call_expr: $ => prec(PREC.call, seq(
       field("callee", $.comptime_expr),
       "(",
-      field("arguments", optional($.expr_list)),
+      field("args", optional($.expr_list)),
       ")",
     )),
 

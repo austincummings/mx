@@ -1,3 +1,6 @@
-fn main[t: 0, t0: 1](): t {
+fn main(): 0 {
+    const lang = 0;
+    var d = 0;
+    lang.print("Hello, World!\n");
     return 0;
 }

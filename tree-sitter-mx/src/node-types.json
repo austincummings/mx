@@ -52,6 +52,10 @@
             "named": true
           },
           {
+            "type": "struct_expr",
+            "named": true
+          },
+          {
             "type": "unary_expr",
             "named": true
           },
@@ -107,6 +111,10 @@
           },
           {
             "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "struct_expr",
             "named": true
           },
           {
@@ -171,6 +179,10 @@
           },
           {
             "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "struct_expr",
             "named": true
           },
           {
@@ -306,6 +318,10 @@
             "named": true
           },
           {
+            "type": "struct_expr",
+            "named": true
+          },
+          {
             "type": "unary_expr",
             "named": true
           },
@@ -386,7 +402,7 @@
     "type": "call_expr",
     "named": true,
     "fields": {
-      "arguments": {
+      "args": {
         "multiple": false,
         "required": false,
         "types": [
@@ -453,12 +469,16 @@
             "named": true
           },
           {
+            "type": "struct_expr",
+            "named": true
+          },
+          {
             "type": "variable_expr",
             "named": true
           }
         ]
       },
-      "comptime_arguments": {
+      "comptime_args": {
         "multiple": false,
         "required": true,
         "types": [
@@ -520,6 +540,10 @@
           },
           {
             "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "struct_expr",
             "named": true
           },
           {
@@ -628,6 +652,10 @@
           "named": true
         },
         {
+          "type": "struct_expr",
+          "named": true
+        },
+        {
           "type": "unary_expr",
           "named": true
         },
@@ -688,6 +716,10 @@
           },
           {
             "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "struct_expr",
             "named": true
           },
           {
@@ -811,6 +843,10 @@
           "named": true
         },
         {
+          "type": "struct_expr",
+          "named": true
+        },
+        {
           "type": "unary_expr",
           "named": true
         },
@@ -871,6 +907,10 @@
           },
           {
             "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "struct_expr",
             "named": true
           },
           {
@@ -987,6 +1027,10 @@
             "named": true
           },
           {
+            "type": "struct_expr",
+            "named": true
+          },
+          {
             "type": "unary_expr",
             "named": true
           },
@@ -1098,6 +1142,10 @@
             "named": true
           },
           {
+            "type": "struct_expr",
+            "named": true
+          },
+          {
             "type": "unary_expr",
             "named": true
           },
@@ -1130,7 +1178,7 @@
     "fields": {
       "expr": {
         "multiple": false,
-        "required": false,
+        "required": true,
         "types": [
           {
             "type": "binary_expr",
@@ -1174,6 +1222,10 @@
           },
           {
             "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "struct_expr",
             "named": true
           },
           {
@@ -1269,6 +1321,10 @@
           "named": true
         },
         {
+          "type": "struct_expr",
+          "named": true
+        },
+        {
           "type": "unary_expr",
           "named": true
         },
@@ -1339,6 +1395,125 @@
     }
   },
   {
+    "type": "struct_expr",
+    "named": true,
+    "fields": {
+      "fields": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "struct_field_expr_list",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "struct_field_expr",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "binary_expr",
+            "named": true
+          },
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "bool_literal",
+            "named": true
+          },
+          {
+            "type": "call_expr",
+            "named": true
+          },
+          {
+            "type": "comptime_call_expr",
+            "named": true
+          },
+          {
+            "type": "float_literal",
+            "named": true
+          },
+          {
+            "type": "group_expr",
+            "named": true
+          },
+          {
+            "type": "int_literal",
+            "named": true
+          },
+          {
+            "type": "member_expr",
+            "named": true
+          },
+          {
+            "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "struct_expr",
+            "named": true
+          },
+          {
+            "type": "unary_expr",
+            "named": true
+          },
+          {
+            "type": "variable_expr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "struct_field_expr_list",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "struct_field_expr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "unary_expr",
     "named": true,
     "fields": {
@@ -1388,6 +1563,10 @@
           },
           {
             "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "struct_expr",
             "named": true
           },
           {
@@ -1486,6 +1665,10 @@
           },
           {
             "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "struct_expr",
             "named": true
           },
           {
@@ -1682,6 +1865,10 @@
   {
     "type": "multiline_string_fragment",
     "named": true
+  },
+  {
+    "type": "new",
+    "named": false
   },
   {
     "type": "or",

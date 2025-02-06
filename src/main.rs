@@ -1,7 +1,6 @@
 mod diag;
 mod mxir;
 mod parser;
-mod query;
 mod sema;
 mod server;
 
@@ -66,7 +65,7 @@ async fn main() {
             // Parse the input
             parser.parse(&input);
 
-            let mut sema = Sema::new(language.clone(), parser.nodes.clone(), &input);
+            let mut sema = Sema::new(parser.nodes.clone());
             sema.analyze();
         }
         _ => {
