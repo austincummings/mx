@@ -40,11 +40,23 @@
             "named": true
           },
           {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
             "type": "member_expr",
             "named": true
           },
           {
             "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "range_expr",
             "named": true
           },
           {
@@ -102,11 +114,23 @@
             "named": true
           },
           {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
             "type": "member_expr",
             "named": true
           },
           {
             "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "range_expr",
             "named": true
           },
           {
@@ -170,11 +194,23 @@
             "named": true
           },
           {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
             "type": "member_expr",
             "named": true
           },
           {
             "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "range_expr",
             "named": true
           },
           {
@@ -306,11 +342,23 @@
             "named": true
           },
           {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
             "type": "member_expr",
             "named": true
           },
           {
             "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "range_expr",
             "named": true
           },
           {
@@ -457,6 +505,14 @@
             "named": true
           },
           {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
             "type": "member_expr",
             "named": true
           },
@@ -528,6 +584,14 @@
           },
           {
             "type": "int_literal",
+            "named": true
+          },
+          {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
             "named": true
           },
           {
@@ -640,11 +704,23 @@
           "named": true
         },
         {
+          "type": "list_literal",
+          "named": true
+        },
+        {
+          "type": "map_literal",
+          "named": true
+        },
+        {
           "type": "member_expr",
           "named": true
         },
         {
           "type": "multiline_string_literal",
+          "named": true
+        },
+        {
+          "type": "range_expr",
           "named": true
         },
         {
@@ -707,11 +783,23 @@
             "named": true
           },
           {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
             "type": "member_expr",
             "named": true
           },
           {
             "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "range_expr",
             "named": true
           },
           {
@@ -831,11 +919,23 @@
           "named": true
         },
         {
+          "type": "list_literal",
+          "named": true
+        },
+        {
+          "type": "map_literal",
+          "named": true
+        },
+        {
           "type": "member_expr",
           "named": true
         },
         {
           "type": "multiline_string_literal",
+          "named": true
+        },
+        {
+          "type": "range_expr",
           "named": true
         },
         {
@@ -898,11 +998,23 @@
             "named": true
           },
           {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
             "type": "member_expr",
             "named": true
           },
           {
             "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "range_expr",
             "named": true
           },
           {
@@ -954,9 +1066,247 @@
     }
   },
   {
+    "type": "kv_pair",
+    "named": true,
+    "fields": {
+      "key": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "binary_expr",
+            "named": true
+          },
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "bool_literal",
+            "named": true
+          },
+          {
+            "type": "call_expr",
+            "named": true
+          },
+          {
+            "type": "comptime_call_expr",
+            "named": true
+          },
+          {
+            "type": "float_literal",
+            "named": true
+          },
+          {
+            "type": "group_expr",
+            "named": true
+          },
+          {
+            "type": "int_literal",
+            "named": true
+          },
+          {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
+            "type": "member_expr",
+            "named": true
+          },
+          {
+            "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "range_expr",
+            "named": true
+          },
+          {
+            "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "struct_expr",
+            "named": true
+          },
+          {
+            "type": "unary_expr",
+            "named": true
+          },
+          {
+            "type": "variable_expr",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "binary_expr",
+            "named": true
+          },
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "bool_literal",
+            "named": true
+          },
+          {
+            "type": "call_expr",
+            "named": true
+          },
+          {
+            "type": "comptime_call_expr",
+            "named": true
+          },
+          {
+            "type": "float_literal",
+            "named": true
+          },
+          {
+            "type": "group_expr",
+            "named": true
+          },
+          {
+            "type": "int_literal",
+            "named": true
+          },
+          {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
+            "type": "member_expr",
+            "named": true
+          },
+          {
+            "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "range_expr",
+            "named": true
+          },
+          {
+            "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "struct_expr",
+            "named": true
+          },
+          {
+            "type": "unary_expr",
+            "named": true
+          },
+          {
+            "type": "variable_expr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "line_terminator",
     "named": true,
     "fields": {}
+  },
+  {
+    "type": "list_literal",
+    "named": true,
+    "fields": {
+      "exprs": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "binary_expr",
+            "named": true
+          },
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "bool_literal",
+            "named": true
+          },
+          {
+            "type": "call_expr",
+            "named": true
+          },
+          {
+            "type": "comptime_call_expr",
+            "named": true
+          },
+          {
+            "type": "float_literal",
+            "named": true
+          },
+          {
+            "type": "group_expr",
+            "named": true
+          },
+          {
+            "type": "int_literal",
+            "named": true
+          },
+          {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
+            "type": "member_expr",
+            "named": true
+          },
+          {
+            "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "range_expr",
+            "named": true
+          },
+          {
+            "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "struct_expr",
+            "named": true
+          },
+          {
+            "type": "unary_expr",
+            "named": true
+          },
+          {
+            "type": "variable_expr",
+            "named": true
+          }
+        ]
+      }
+    }
   },
   {
     "type": "loop_stmt",
@@ -968,6 +1318,26 @@
         "types": [
           {
             "type": "block",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "map_literal",
+    "named": true,
+    "fields": {
+      "pairs": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "kv_pair",
             "named": true
           }
         ]
@@ -1015,11 +1385,23 @@
             "named": true
           },
           {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
             "type": "member_expr",
             "named": true
           },
           {
             "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "range_expr",
             "named": true
           },
           {
@@ -1130,11 +1512,23 @@
             "named": true
           },
           {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
             "type": "member_expr",
             "named": true
           },
           {
             "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "range_expr",
             "named": true
           },
           {
@@ -1170,6 +1564,128 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "range_expr",
+    "named": true,
+    "fields": {
+      "from": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "bool_literal",
+            "named": true
+          },
+          {
+            "type": "call_expr",
+            "named": true
+          },
+          {
+            "type": "float_literal",
+            "named": true
+          },
+          {
+            "type": "group_expr",
+            "named": true
+          },
+          {
+            "type": "int_literal",
+            "named": true
+          },
+          {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
+            "type": "member_expr",
+            "named": true
+          },
+          {
+            "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "struct_expr",
+            "named": true
+          },
+          {
+            "type": "variable_expr",
+            "named": true
+          }
+        ]
+      },
+      "to": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "bool_literal",
+            "named": true
+          },
+          {
+            "type": "call_expr",
+            "named": true
+          },
+          {
+            "type": "float_literal",
+            "named": true
+          },
+          {
+            "type": "group_expr",
+            "named": true
+          },
+          {
+            "type": "int_literal",
+            "named": true
+          },
+          {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
+            "type": "member_expr",
+            "named": true
+          },
+          {
+            "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "struct_expr",
+            "named": true
+          },
+          {
+            "type": "variable_expr",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -1213,11 +1729,23 @@
             "named": true
           },
           {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
             "type": "member_expr",
             "named": true
           },
           {
             "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "range_expr",
             "named": true
           },
           {
@@ -1309,11 +1837,23 @@
           "named": true
         },
         {
+          "type": "list_literal",
+          "named": true
+        },
+        {
+          "type": "map_literal",
+          "named": true
+        },
+        {
           "type": "member_expr",
           "named": true
         },
         {
           "type": "multiline_string_literal",
+          "named": true
+        },
+        {
+          "type": "range_expr",
           "named": true
         },
         {
@@ -1471,11 +2011,23 @@
             "named": true
           },
           {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
             "type": "member_expr",
             "named": true
           },
           {
             "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "range_expr",
             "named": true
           },
           {
@@ -1554,11 +2106,23 @@
             "named": true
           },
           {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
             "type": "member_expr",
             "named": true
           },
           {
             "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "range_expr",
             "named": true
           },
           {
@@ -1656,11 +2220,23 @@
             "named": true
           },
           {
+            "type": "list_literal",
+            "named": true
+          },
+          {
+            "type": "map_literal",
+            "named": true
+          },
+          {
             "type": "member_expr",
             "named": true
           },
           {
             "type": "multiline_string_literal",
+            "named": true
+          },
+          {
+            "type": "range_expr",
             "named": true
           },
           {
@@ -1863,6 +2439,10 @@
     "named": false
   },
   {
+    "type": "map",
+    "named": false
+  },
+  {
     "type": "multiline_string_fragment",
     "named": true
   },
@@ -1884,6 +2464,10 @@
   },
   {
     "type": "struct",
+    "named": false
+  },
+  {
+    "type": "to",
     "named": false
   },
   {

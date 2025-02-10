@@ -108,6 +108,7 @@ module.exports = grammar({
       $.unary_expr,
       $.binary_expr,
       $.comptime_call_expr,
+      $.range_expr,
       $._primary_expr,
     ),
 
@@ -124,6 +125,8 @@ module.exports = grammar({
       $.string_literal,
       $.multiline_string_literal,
       $.bool_literal,
+      $.list_literal,
+      $.map_literal,
       $.call_expr,
       $.member_expr,
       $.variable_expr,
@@ -141,6 +144,8 @@ module.exports = grammar({
     variable_expr: $ => $.identifier,
 
     group_expr: $ => prec(PREC.group, seq("(", $._expr, ")")),
+
+    range_expr: $ => prec(PREC.range, seq(field("from", $._primary_expr), "to", field("to", $._primary_expr))),
 
     struct_expr: $ => prec(PREC.struct, seq(
       "new",
@@ -259,6 +264,20 @@ module.exports = grammar({
     ),
 
     bool_literal: $ => choice("true", "false"),
+
+    list_literal: $ => seq("[", field("exprs", optional(seq(
+      $._expr,
+      repeat(seq(",", $._expr)))
+    )), "]"),
+
+    map_literal: $ => seq(
+      "map",
+      "{",
+      field("pairs", optional(seq($.kv_pair, repeat(seq(",", $.kv_pair))))),
+      "}",
+    ),
+
+    kv_pair: $ => seq(field("key", $._expr), ":", field("value", $._expr)),
 
     // Misc
 

@@ -7,7 +7,7 @@ INCLUDES := -I. -Ithird_party/jansson/include
 
 # Compiler and linker flags
 CFLAGS := -std=c23 -Wall -Wextra -pedantic -flto -g -static $(INCLUDES)
-LDFLAGS := -Ltree-sitter-mx -Lthird_party/tree-sitter -Lthird_party/jansson/build/lib -static -flto -static-libgcc
+LDFLAGS := -Ltree-sitter-mx -Lthird_party/tree-sitter -Lthird_party/jansson/build/lib -static -flto
 LIBS := -ltree-sitter-mx -ltree-sitter -ljansson
 
 # Directories

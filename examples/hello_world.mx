@@ -1,6 +1,6 @@
 const libc = import["std/libc.mx"];
 
-fn main(): 0 {
-    libc.printf(c_str["Hello, World!\n"]);
-    return 0;
+fn main(): c_type["int"] {
+    libc.printf(c_value["Hello, World!\n"]);
+    return c_value[0];
 }

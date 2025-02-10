@@ -31,9 +31,6 @@
 ((identifier) @type.builtin
   (#eq? @type.builtin "Self"))
 
-; ((identifier) @type.builtin
-;   (#eq? @type.builtin "void"))
-
 ; Built-in identifiers
 ((identifier) @variable.builtin
   (#eq? @variable.builtin "self"))
@@ -50,6 +47,11 @@
 ((identifier) @variable.builtin
   (#eq? @variable.builtin "c_type"))
 
+((identifier) @variable.builtin
+  (#eq? @variable.builtin "c_value"))
+
+((identifier) @variable.builtin
+  (#eq? @variable.builtin "cast"))
 
 [
  "fn"
@@ -62,7 +64,8 @@
  "loop"
  "break"
  "continue"
- "comptime"
+ "map"
+ "to"
 ] @keyword
 
 [

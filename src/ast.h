@@ -1,28 +1,33 @@
 #ifndef _MX_AST_H
 #define _MX_AST_H
 
-typedef enum {
-    AST_NODE_SOURCE_FILE,
-    AST_NODE_FN_DECL,
-    AST_NODE_STRUCT_DECL,
+#include "array_list.h"
+#include "loc.h"
+#include "map.h"
+#include <stdint.h>
 
-} AstNodeKind;
+typedef uint32_t AstNodeRef;
 
 typedef struct {
-    AstNodeKind kind;
-    union {
-        struct {
-            const char *name;
-        } source_file;
-        struct {
-            const char *name;
-        } fn_decl;
-    };
+    AstNodeRef node;
+    bool is_present;
+} OptionalAstNodeRef;
+
+typedef ArrayList(AstNodeRef) AstNodeRefList;
+
+typedef struct {
+    AstNodeRef self_ref;
+    const char *type; // Owned by the permanent arena
+    MXRange range;
+    const char *text; // Owned by the permanent arena
+    AstNodeRefList children;
 } AstNode;
 
+typedef ArrayList(AstNode) AstNodeList;
+
 typedef struct {
-    const char *src; // Owned by the permanent arena
-    AstNode nodes[];
+    const char *src;   // Owned by the permanent arena
+    AstNodeList nodes; // Owned by the permanent arena
 } Ast;
 
 #endif // _MX_AST_H
