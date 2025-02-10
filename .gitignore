@@ -1,2 +1,4 @@
-.cosmocc/
-
+*.o
+bin/
+obj/
+lib/

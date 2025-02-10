@@ -1,0 +1,6 @@
+const libc = import["std/libc.mx"];
+
+fn main(): 0 {
+    libc.printf(c_str["Hello, World!\n"]);
+    return 0;
+}
