@@ -5,6 +5,7 @@
 #include "io.h"
 #include "mem.h"
 #include "parser.h"
+#include "server.h"
 
 Arena permanent_arena = {0};
 
@@ -32,36 +33,13 @@ int compile() {
 }
 
 int server() {
-    Arena server_arena = {0};
-    arena_init(&server_arena, ARENA_DEFAULT_RESERVE_SIZE);
-
-    char buffer[1024];
-
-    while (fgets(buffer, sizeof(buffer), stdin)) {
-        if (strstr(buffer, "Content-Length:") != NULL) {
-            int content_length = 0;
-            sscanf(buffer, "Content-Length: %d", &content_length);
-            fgets(buffer, sizeof(buffer), stdin); // Read empty line
-
-            if (content_length > 0 && content_length < sizeof(buffer)) {
-                fread(buffer, 1, content_length, stdin);
-                buffer[content_length] = '\0'; // Ensure null termination
-
-                printf("Content-Length: "
-                       "%d\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":"
-                       "\"Hello from the other side\"}\n",
-                       (int)strlen("{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":"
-                                   "\"Hello from the other side\"}"));
-                fflush(stdout);
-            }
-        }
-    }
-
-    arena_release(&server_arena);
+    MXLangServer server = {0};
+    mx_lang_server_init(&permanent_arena, &server);
+    mx_lang_server_listen(&server);
     return 0;
 }
 
-void usage() { printf("Usage: mxc <lsp|compile>\n"); }
+void usage() { printf("Usage: mxc <server|compile>\n"); }
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -71,7 +49,7 @@ int main(int argc, char *argv[]) {
 
     arena_init(&permanent_arena, ARENA_DEFAULT_RESERVE_SIZE);
 
-    if (strcmp(argv[1], "lsp") == 0) {
+    if (strcmp(argv[1], "server") == 0) {
         return server();
     } else if (strcmp(argv[1], "compile") == 0) {
         return compile();
