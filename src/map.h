@@ -33,6 +33,8 @@ void hashmap_set(Arena *a, HashMap *hashmap, const char *key, void *value);
 
 void *hashmap_get(HashMap *hashmap, const char *key);
 
+void hashmap_delete(HashMap *hashmap, const char *key);
+
 HashMapIterator hashmap_iterator(HashMap *hashmap);
 
 int hashmap_iterator_has_next(HashMapIterator *it);

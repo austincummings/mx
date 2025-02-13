@@ -3,7 +3,6 @@
 #include <tree_sitter/api.h>
 
 #include "ast.h"
-#include "debug.h"
 #include "mem.h"
 #include "parser.h"
 
@@ -51,8 +50,19 @@ static void walk_tree(MXParser *parser) {
                 .range = range,
                 .kind = MX_DIAG_SYNTAX_ERROR,
             };
-            arraylist_add(&parser->arena, &parser->diagnostics, diag);
+            arraylist_add(parser->permanent_arena, &parser->diagnostics, diag);
         }
+
+        AstNodeRef self_ref = parser->nodes.size;
+
+        // Store the node
+        AstNode ast_node = {.self_ref = self_ref,
+                            .type = type,
+                            .text = text,
+                            .range = range,
+                            .children = {0}};
+        arraylist_init(parser->permanent_arena, &ast_node.children, 24);
+        arraylist_add(parser->permanent_arena, &parser->nodes, ast_node);
 
         if (ts_tree_cursor_goto_first_child(&parser->cursor)) {
             walk_tree(parser);
@@ -67,9 +77,11 @@ void mx_parser_init(Arena *permanent_arena, MXParser *parser, const char *src) {
     parser->permanent_arena = permanent_arena;
     arena_init(&parser->arena, ARENA_DEFAULT_RESERVE_SIZE);
     parser->src = src;
+    arraylist_init(&parser->arena, &parser->diagnostics, 24);
+    arraylist_init(&parser->arena, &parser->nodes, 24);
 }
 
-Ast mx_parser_parse(MXParser *parser) {
+void mx_parser_parse(MXParser *parser) {
     TSParser *ts_parser = ts_parser_new();
     ts_parser_set_language(ts_parser, tree_sitter_mx());
 
@@ -85,7 +97,15 @@ Ast mx_parser_parse(MXParser *parser) {
     parser->cursor = ts_tree_cursor_new(root_node);
 
     walk_tree(parser);
+}
 
-    Ast ast = {0};
+Ast *parse(Arena *permanent_arena, const char *src) {
+    MXParser parser = {0};
+    mx_parser_init(permanent_arena, &parser, src);
+    mx_parser_parse(&parser);
+
+    Ast *ast = arena_alloc(permanent_arena, sizeof(Ast));
+    ast->nodes = parser.nodes;
+    ast->diagnostics = parser.diagnostics;
     return ast;
 }

@@ -15,4 +15,6 @@ void mx_lang_server_init(Arena *permanent_arena, MXLangServer *server);
 
 void mx_lang_server_listen(MXLangServer *server);
 
+void server(Arena *permanent_arena);
+
 #endif // _MX_SERVER_H

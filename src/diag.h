@@ -15,4 +15,6 @@ typedef struct {
 
 typedef ArrayList(MXDiagnostic) MXDiagnosticList;
 
+const char *mx_diagnostic_kind_to_string(Arena *a, MXDiagnosticKind kind);
+
 #endif // _MX_DIAG_H

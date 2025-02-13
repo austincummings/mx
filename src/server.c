@@ -1,13 +1,60 @@
 #include "server.h"
 
 #include "jansson.h"
+#include "map.h"
+#include "parser.h"
 
-static void write_response(json_t *response) {
+static json_t *mx_range_to_json(MXRange range) {
+    json_t *range_obj = json_object();
+    json_t *start = json_object();
+    json_object_set_new(start, "line", json_integer(range.start.row));
+    json_object_set_new(start, "character", json_integer(range.start.col));
+    json_object_set_new(range_obj, "start", start);
+    json_t *end = json_object();
+    json_object_set_new(end, "line", json_integer(range.end.row));
+    json_object_set_new(end, "character", json_integer(range.end.col));
+    json_object_set_new(range_obj, "end", end);
+    return range_obj;
+}
+
+static void send(json_t *response) {
     char *response_str = json_dumps(response, JSON_COMPACT);
-    printf("Content-Length: %zu\n%s", strlen(response_str), response_str);
-    fprintf(stderr, "Content-Length: %zu\n%s", strlen(response_str),
+    printf("Content-Length: %zu\r\n\r\n%s\r\n", strlen(response_str),
+           response_str);
+    fprintf(stderr, "Content-Length: %zu\n\n%s\n", strlen(response_str),
             response_str);
+    fflush(stdout);
     free(response_str);
+}
+
+static json_t *mk_publish_diagnostics(const char *uri,
+                                      MXDiagnosticList *diags) {
+    Arena scratch = {0};
+    arena_init(&scratch, ARENA_DEFAULT_RESERVE_SIZE);
+    json_t *response = json_object();
+    json_object_set_new(response, "jsonrpc", json_string("2.0"));
+    json_object_set_new(response, "method",
+                        json_string("textDocument/publishDiagnostics"));
+
+    json_t *params = json_object();
+    json_t *diagnostics = json_array();
+    for (size_t i = 0; i < diags->size; i++) {
+        MXDiagnostic *diag = arraylist_get(diags, i);
+        json_t *diagnostic = json_object();
+        json_object_set_new(diagnostic, "range", mx_range_to_json(diag->range));
+        const char *message =
+            mx_diagnostic_kind_to_string(&scratch, diag->kind);
+        json_object_set_new(diagnostic, "message", json_string(message));
+        json_object_set_new(diagnostic, "severity", json_integer(1));
+        json_array_append_new(diagnostics, diagnostic);
+    }
+    json_object_set_new(params, "diagnostics", diagnostics);
+    json_object_set_new(params, "uri", json_string(uri));
+    json_object_set_new(response, "params", params);
+
+    arena_release(&scratch);
+
+    return response;
 }
 
 static json_t *mk_capabilities() {
@@ -15,9 +62,11 @@ static json_t *mk_capabilities() {
     json_t *textDocumentSync = json_object();
     json_object_set_new(textDocumentSync, "openClose", json_true());
     json_object_set_new(textDocumentSync, "change", json_integer(1));
-    json_object_set_new(textDocumentSync, "willSave", json_true());
+    json_object_set_new(textDocumentSync, "willSave", json_false());
     json_object_set_new(textDocumentSync, "willSaveWaitUntil", json_false());
-    json_object_set_new(textDocumentSync, "save", json_true());
+    json_t *save = json_object();
+    json_object_set_new(save, "includeText", json_true());
+    json_object_set_new(textDocumentSync, "save", save);
     json_object_set_new(capabilities, "textDocumentSync", textDocumentSync);
     return capabilities;
 }
@@ -39,6 +88,9 @@ static json_t *mk_initialize(uint32_t id) {
 }
 
 static void initialize_handler(MXLangServer *server, json_t *request) {
+    assert(server != NULL);
+    assert(request != NULL);
+
     // Extract the ID
     json_t *id = json_object_get(request, "id");
     if (!id || !json_is_integer(id)) {
@@ -50,21 +102,118 @@ static void initialize_handler(MXLangServer *server, json_t *request) {
     // Send the response
     json_t *response = mk_initialize(id_value);
 
-    write_response(response);
+    send(response);
 
     json_decref(response);
 }
 
-static void did_open_handler(MXLangServer *server, json_t *request) {
-    fprintf(stderr, "Document opened\n");
+static void shutdown_handler(MXLangServer *server, json_t *request) {
+    assert(server != NULL);
+    assert(request != NULL);
+    exit(0);
+}
 
-    // Extract the document URI
+static void did_open_handler(MXLangServer *server, json_t *request) {
+    assert(server != NULL);
+    assert(request != NULL);
+    // Extract the params
     json_t *params = json_object_get(request, "params");
     if (!params || !json_is_object(params)) {
         fprintf(stderr, "Invalid params in request\n");
         return;
     }
-    json_t *uri = json_object_get(params, "uri");
+
+    // Extract the text document
+    json_t *textDocument = json_object_get(params, "textDocument");
+    if (!textDocument || !json_is_object(textDocument)) {
+        fprintf(stderr, "Invalid textDocument in request\n");
+        return;
+    }
+
+    // Extract the document URI
+    json_t *uri = json_object_get(textDocument, "uri");
+    if (!uri || !json_is_string(uri)) {
+        fprintf(stderr, "Invalid URI in request\n");
+        return;
+    }
+    const char *uri_value = json_string_value(uri);
+
+    // Extract the document text
+    json_t *text = json_object_get(textDocument, "text");
+    if (!text || !json_is_string(text)) {
+        fprintf(stderr, "Invalid text in request\n");
+        return;
+    }
+    const char *text_value = json_string_value(text);
+
+    // Store the document in the server
+    hashmap_set(&server->arena, server->documents, uri_value,
+                (void *)text_value);
+
+    // Parse the document
+    Ast *ast = parse(server->permanent_arena, text_value);
+
+    // Send diagnostics
+    json_t *response = mk_publish_diagnostics(uri_value, &ast->diagnostics);
+
+    send(response);
+}
+
+static void did_change_handler(MXLangServer *server, json_t *request) {
+    assert(server != NULL);
+    assert(request != NULL);
+}
+
+static void did_close_handler(MXLangServer *server, json_t *request) {
+    assert(server != NULL);
+    assert(request != NULL);
+
+    // Extract the params
+    json_t *params = json_object_get(request, "params");
+    if (!params || !json_is_object(params)) {
+        fprintf(stderr, "Invalid params in request\n");
+        return;
+    }
+
+    // Extract the text document
+    json_t *textDocument = json_object_get(params, "textDocument");
+    if (!textDocument || !json_is_object(textDocument)) {
+        fprintf(stderr, "Invalid textDocument in request\n");
+        return;
+    }
+
+    // Extract the document URI
+    json_t *uri = json_object_get(textDocument, "uri");
+    if (!uri || !json_is_string(uri)) {
+        fprintf(stderr, "Invalid URI in request\n");
+        return;
+    }
+    const char *uri_value = json_string_value(uri);
+
+    // Remove the document from the server
+    hashmap_delete(server->documents, uri_value);
+}
+
+static void did_save_handler(MXLangServer *server, json_t *request) {
+    assert(server != NULL);
+    assert(request != NULL);
+
+    // Extract the params
+    json_t *params = json_object_get(request, "params");
+    if (!params || !json_is_object(params)) {
+        fprintf(stderr, "Invalid params in request\n");
+        return;
+    }
+
+    // Extract the text document
+    json_t *textDocument = json_object_get(params, "textDocument");
+    if (!textDocument || !json_is_object(textDocument)) {
+        fprintf(stderr, "Invalid textDocument in request\n");
+        return;
+    }
+
+    // Extract the document URI
+    json_t *uri = json_object_get(textDocument, "uri");
     if (!uri || !json_is_string(uri)) {
         fprintf(stderr, "Invalid URI in request\n");
         return;
@@ -79,11 +228,17 @@ static void did_open_handler(MXLangServer *server, json_t *request) {
     }
     const char *text_value = json_string_value(text);
 
-    fprintf(stderr, "Document opened: %s\n", uri_value);
-
     // Store the document in the server
     hashmap_set(&server->arena, server->documents, uri_value,
                 (void *)text_value);
+
+    // Parse the document
+    Ast *ast = parse(server->permanent_arena, text_value);
+
+    // Send diagnostics
+    json_t *response = mk_publish_diagnostics(uri_value, &ast->diagnostics);
+
+    send(response);
 }
 
 // Function type for a request handler
@@ -94,7 +249,11 @@ static struct {
     const char *method;
     RequestHandler handler;
 } handlers[] = {{"initialize", initialize_handler},
-                {"textDocument/didOpen", did_open_handler}};
+                {"shutdown", shutdown_handler},
+                {"textDocument/didOpen", did_open_handler},
+                {"textDocument/didClose", did_close_handler},
+                {"textDocument/didChange", did_change_handler},
+                {"textDocument/didSave", did_save_handler}};
 
 #define BUFFER_SIZE 8192
 
@@ -163,8 +322,6 @@ void mx_lang_server_listen(MXLangServer *server) {
             continue;
         }
 
-        fprintf(stderr, "Received: %s\n", json_dumps(message, JSON_INDENT(4)));
-
         // Extract the method
         const char *method =
             json_string_value(json_object_get(message, "method"));
@@ -182,6 +339,8 @@ void mx_lang_server_listen(MXLangServer *server) {
             }
         }
 
+        fprintf(stderr, "Handler found: %p\n", (void *)handler);
+
         // Call the handler
         if (handler) {
             fprintf(stderr, "Handling method: %s\n", method);
@@ -190,4 +349,10 @@ void mx_lang_server_listen(MXLangServer *server) {
             fprintf(stderr, "No handler for method: %s\n", method);
         }
     }
+}
+
+void server(Arena *permanent_arena) {
+    MXLangServer server = {0};
+    mx_lang_server_init(permanent_arena, &server);
+    mx_lang_server_listen(&server);
 }

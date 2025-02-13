@@ -8,6 +8,8 @@
 
 const TSLanguage *tree_sitter_mx(void);
 
+Ast *parse(Arena *a, const char *src);
+
 typedef struct {
     Arena *permanent_arena;
     Arena arena;
@@ -18,10 +20,11 @@ typedef struct {
     TSTree *tree;
 
     MXDiagnosticList diagnostics;
+    AstNodeList nodes;
 } MXParser;
 
 void mx_parser_init(Arena *permanent_arena, MXParser *parser, const char *src);
 
-Ast mx_parser_parse(MXParser *parser);
+void mx_parser_parse(MXParser *parser);
 
 #endif // _MX_PARSER_H

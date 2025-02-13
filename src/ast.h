@@ -2,6 +2,7 @@
 #define _MX_AST_H
 
 #include "array_list.h"
+#include "diag.h"
 #include "loc.h"
 #include "map.h"
 #include <stdint.h>
@@ -28,6 +29,7 @@ typedef ArrayList(AstNode) AstNodeList;
 typedef struct {
     const char *src;   // Owned by the permanent arena
     AstNodeList nodes; // Owned by the permanent arena
+    MXDiagnosticList diagnostics;
 } Ast;
 
 #endif // _MX_AST_H

@@ -20,14 +20,26 @@ HashMap *hashmap_init(Arena *a) {
 }
 
 void hashmap_set(Arena *a, HashMap *hashmap, const char *key, void *value) {
+    // If the key already exists, update the value
+    // Otherwise, add a new node
     uint32_t index = hash(key);
+    HashNode *node = hashmap->table[index];
+    while (node != NULL) {
+        if (strcmp(node->key, key) == 0) {
+            node->value = value;
+            return;
+        }
+        node = node->next;
+    }
+
+    // Create a new node
     HashNode *new_node = arena_alloc(a, sizeof(HashNode));
     new_node->key = arena_alloc(a, strlen(key) + 1);
     strcpy(new_node->key, key);
     new_node->value = value;
     new_node->next = hashmap->table[index];
-    hashmap->size++;
     hashmap->table[index] = new_node;
+    hashmap->size++;
 }
 
 void *hashmap_get(HashMap *hashmap, const char *key) {
@@ -40,6 +52,24 @@ void *hashmap_get(HashMap *hashmap, const char *key) {
         node = node->next;
     }
     return NULL; // Key not found
+}
+
+void hashmap_delete(HashMap *hashmap, const char *key) {
+    uint32_t index = hash(key);
+    HashNode *node = hashmap->table[index];
+    HashNode *prev = NULL;
+    while (node != NULL) {
+        if (strcmp(node->key, key) == 0) {
+            if (prev == NULL) {
+                hashmap->table[index] = node->next;
+            } else {
+                prev->next = node->next;
+            }
+            return;
+        }
+        prev = node;
+        node = node->next;
+    }
 }
 
 HashMapIterator hashmap_iterator(HashMap *hashmap) {
