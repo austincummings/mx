@@ -16,7 +16,6 @@ typedef struct {
 
     const char *src;
 
-    TSTreeCursor cursor;
     TSTree *tree;
 
     MXDiagnosticList diagnostics;

@@ -6,10 +6,13 @@
 #include "mxir.h"
 
 typedef struct {
-    char *src;
+    Arena *permanent_arena;
+    Arena arena;
+    Ast *ast;
+    Mxir *ir;
 } MXSema;
 
-MXSema *mx_sema_new(Arena *arena);
+MXSema *mx_sema_new(Arena *permanent_arena, Arena *arena);
 
 Mxir *analyze(Arena *permanent_arena, Ast *ast);
 

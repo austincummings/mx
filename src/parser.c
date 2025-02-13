@@ -6,71 +6,67 @@
 #include "mem.h"
 #include "parser.h"
 
-static void walk_tree(MXParser *parser) {
+static AstNodeRef walk_tree(MXParser *parser, TSNode node) {
     Arena scratch = {0};
     arena_init(&scratch, ARENA_DEFAULT_RESERVE_SIZE);
 
-    do {
-        TSNode node = ts_tree_cursor_current_node(&parser->cursor);
+    MXRange range = {
+        .start =
+            {
+                .row = ts_node_start_point(node).row,
+                .col = ts_node_start_point(node).column,
+            },
+        .end =
+            {
+                .row = ts_node_end_point(node).row,
+                .col = ts_node_end_point(node).column,
+            },
+    };
 
-        // printf("%s(%b): ", ts_node_type(node), ts_node_is_named(node));
-        // printf("`%.*s`\n",
-        //        (int)ts_node_end_byte(node) - ts_node_start_byte(node),
-        //        parser->src + ts_node_start_byte(node));
-        if (!ts_node_is_named(node)) {
-            continue;
-        }
+    const char *type_orig = ts_node_type(node);
+    const char *type =
+        arena_alloc(parser->permanent_arena, strlen(type_orig) + 1);
+    memcpy((void *)type, type_orig, strlen(type_orig) + 1);
+    const char *text =
+        arena_alloc(parser->permanent_arena,
+                    ts_node_end_byte(node) - ts_node_start_byte(node) + 1);
+    memcpy((void *)text, parser->src + ts_node_start_byte(node),
+           ts_node_end_byte(node) - ts_node_start_byte(node));
 
-        MXRange range = {
-            .start =
-                {
-                    .row = ts_node_start_point(node).row,
-                    .col = ts_node_start_point(node).column,
-                },
-            .end =
-                {
-                    .row = ts_node_end_point(node).row,
-                    .col = ts_node_end_point(node).column,
-                },
+    // Store any syntax errors
+    if (ts_node_is_error(node)) {
+        MXDiagnostic diag = {
+            .range = range,
+            .kind = MX_DIAG_SYNTAX_ERROR,
         };
+        arraylist_add(parser->permanent_arena, &parser->diagnostics, diag);
+    }
 
-        const char *type_orig = ts_node_type(node);
-        const char *type =
-            arena_alloc(parser->permanent_arena, strlen(type_orig) + 1);
-        memcpy((void *)type, type_orig, strlen(type_orig) + 1);
-        const char *text =
-            arena_alloc(parser->permanent_arena,
-                        ts_node_end_byte(node) - ts_node_start_byte(node) + 1);
-        memcpy((void *)text, parser->src + ts_node_start_byte(node),
-               ts_node_end_byte(node) - ts_node_start_byte(node));
+    AstNodeRef self_ref = parser->nodes.size;
 
-        // Store any syntax errors
-        if (ts_node_is_error(node)) {
-            MXDiagnostic diag = {
-                .range = range,
-                .kind = MX_DIAG_SYNTAX_ERROR,
-            };
-            arraylist_add(parser->permanent_arena, &parser->diagnostics, diag);
-        }
+    printf("%d: %s(%b): ", self_ref, ts_node_type(node),
+           ts_node_is_named(node));
+    printf("`%.*s`\n", (int)ts_node_end_byte(node) - ts_node_start_byte(node),
+           parser->src + ts_node_start_byte(node));
 
-        AstNodeRef self_ref = parser->nodes.size;
+    // Store the node
+    AstNode ast_node = {.self_ref = self_ref,
+                        .type = type,
+                        .text = text,
+                        .range = range,
+                        .children = {0}};
+    arraylist_init(parser->permanent_arena, &ast_node.children, 24);
+    arraylist_add(parser->permanent_arena, &parser->nodes, ast_node);
 
-        // Store the node
-        AstNode ast_node = {.self_ref = self_ref,
-                            .type = type,
-                            .text = text,
-                            .range = range,
-                            .children = {0}};
-        arraylist_init(parser->permanent_arena, &ast_node.children, 24);
-        arraylist_add(parser->permanent_arena, &parser->nodes, ast_node);
-
-        if (ts_tree_cursor_goto_first_child(&parser->cursor)) {
-            walk_tree(parser);
-            ts_tree_cursor_goto_parent(&parser->cursor);
-        }
-    } while (ts_tree_cursor_goto_next_sibling(&parser->cursor));
+    for (size_t i = 0; i < ts_node_named_child_count(node); i++) {
+        TSNode child = ts_node_named_child(node, i);
+        AstNodeRef child_ref = walk_tree(parser, child);
+        arraylist_add(parser->permanent_arena, &ast_node.children, child_ref);
+    }
 
     arena_release(&scratch);
+
+    return self_ref;
 }
 
 void mx_parser_init(Arena *permanent_arena, MXParser *parser, const char *src) {
@@ -94,9 +90,7 @@ void mx_parser_parse(MXParser *parser) {
     TSNode root_node = ts_tree_root_node(tree);
     assert(!ts_node_is_null(root_node));
 
-    parser->cursor = ts_tree_cursor_new(root_node);
-
-    walk_tree(parser);
+    walk_tree(parser, root_node);
 }
 
 Ast *parse(Arena *permanent_arena, const char *src) {
