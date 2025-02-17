@@ -5,7 +5,10 @@
 #include "loc.h"
 
 typedef enum {
+    MX_DIAG_UNHANDLED_BINDING,
     MX_DIAG_SYNTAX_ERROR,
+    MX_DIAG_SYNTAX_ERROR_EXPECTED_END_BRACE,
+    MX_DIAG_SYNTAX_ERROR_EXPECTED_SEMICOLON,
 } MXDiagnosticKind;
 
 typedef struct {

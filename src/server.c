@@ -3,6 +3,7 @@
 #include "jansson.h"
 #include "map.h"
 #include "parser.h"
+#include "sema.h"
 
 static json_t *mx_range_to_json(MXRange range) {
     json_t *range_obj = json_object();
@@ -152,6 +153,7 @@ static void did_open_handler(MXLangServer *server, json_t *request) {
 
     // Parse the document
     Ast *ast = parse(server->permanent_arena, text_value);
+    Mxir *mxir = analyze(server->permanent_arena, ast);
 
     // Send diagnostics
     json_t *response = mk_publish_diagnostics(uri_value, &ast->diagnostics);
@@ -234,6 +236,7 @@ static void did_save_handler(MXLangServer *server, json_t *request) {
 
     // Parse the document
     Ast *ast = parse(server->permanent_arena, text_value);
+    Mxir *mxir = analyze(server->permanent_arena, ast);
 
     // Send diagnostics
     json_t *response = mk_publish_diagnostics(uri_value, &ast->diagnostics);

@@ -150,6 +150,16 @@
             "named": true
           }
         ]
+      },
+      "semi": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": ";",
+            "named": false
+          }
+        ]
       }
     }
   },
@@ -384,7 +394,18 @@
   {
     "type": "block",
     "named": true,
-    "fields": {},
+    "fields": {
+      "end": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "}",
+            "named": false
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
       "required": false,
@@ -444,7 +465,18 @@
   {
     "type": "break_stmt",
     "named": true,
-    "fields": {}
+    "fields": {
+      "semi": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": ";",
+            "named": false
+          }
+        ]
+      }
+    }
   },
   {
     "type": "call_expr",
@@ -661,7 +693,18 @@
   {
     "type": "continue_stmt",
     "named": true,
-    "fields": {}
+    "fields": {
+      "semi": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": ";",
+            "named": false
+          }
+        ]
+      }
+    }
   },
   {
     "type": "expr_list",
@@ -817,6 +860,16 @@
           {
             "type": "variable_expr",
             "named": true
+          }
+        ]
+      },
+      "semi": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": ";",
+            "named": false
           }
         ]
       }
@@ -1765,6 +1818,16 @@
             "named": true
           }
         ]
+      },
+      "semi": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": ";",
+            "named": false
+          }
+        ]
       }
     }
   },
@@ -2388,6 +2451,10 @@
   },
   {
     "type": "break",
+    "named": false
+  },
+  {
+    "type": "comptime",
     "named": false
   },
   {

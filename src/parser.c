@@ -3,8 +3,26 @@
 #include <tree_sitter/api.h>
 
 #include "ast.h"
+#include "debug.h"
 #include "mem.h"
 #include "parser.h"
+
+static const char *node_text(MXParser *parser, TSNode node) {
+    const char *text =
+        arena_alloc(parser->permanent_arena,
+                    ts_node_end_byte(node) - ts_node_start_byte(node) + 1);
+    memcpy((void *)text, parser->src + ts_node_start_byte(node),
+           ts_node_end_byte(node) - ts_node_start_byte(node));
+    return text;
+}
+
+static const char *node_type(MXParser *parser, TSNode node) {
+    const char *type_orig = ts_node_type(node);
+    const char *type =
+        arena_alloc(parser->permanent_arena, strlen(type_orig) + 1);
+    memcpy((void *)type, type_orig, strlen(type_orig) + 1);
+    return type;
+}
 
 static AstNodeRef walk_tree(MXParser *parser, TSNode node) {
     Arena scratch = {0};
@@ -23,15 +41,8 @@ static AstNodeRef walk_tree(MXParser *parser, TSNode node) {
             },
     };
 
-    const char *type_orig = ts_node_type(node);
-    const char *type =
-        arena_alloc(parser->permanent_arena, strlen(type_orig) + 1);
-    memcpy((void *)type, type_orig, strlen(type_orig) + 1);
-    const char *text =
-        arena_alloc(parser->permanent_arena,
-                    ts_node_end_byte(node) - ts_node_start_byte(node) + 1);
-    memcpy((void *)text, parser->src + ts_node_start_byte(node),
-           ts_node_end_byte(node) - ts_node_start_byte(node));
+    const char *type = node_type(parser, node);
+    const char *text = node_text(parser, node);
 
     // Store any syntax errors
     if (ts_node_is_error(node)) {
@@ -42,29 +53,68 @@ static AstNodeRef walk_tree(MXParser *parser, TSNode node) {
         arraylist_add(parser->permanent_arena, &parser->diagnostics, diag);
     }
 
+    // TODO: Refactor out extra syntax checks
+    if (strcmp(type, "block") == 0) {
+        // Check that the block has a "end" field
+        TSNode end_node =
+            ts_node_child_by_field_name(node, "end", strlen("end"));
+        assert(!ts_node_is_null(end_node));
+        const char *text = node_text(parser, end_node);
+
+        if (strcmp(text, "}") != 0) {
+            MXDiagnostic diag = {
+                .range = range,
+                .kind = MX_DIAG_SYNTAX_ERROR_EXPECTED_END_BRACE,
+            };
+            arraylist_add(parser->permanent_arena, &parser->diagnostics, diag);
+        }
+    }
+
+    if (strcmp(type, "break_stmt") == 0 || strcmp(type, "continue_stmt") == 0 ||
+        strcmp(type, "return_stmt") == 0 || strcmp(type, "assign_stmt") == 0 ||
+        strcmp(type, "expr_stmt") == 0) {
+        // Check that the node has a "semi" field that is a semicolon
+        TSNode end_node =
+            ts_node_child_by_field_name(node, "semi", strlen("semi"));
+        assert(!ts_node_is_null(end_node));
+        const char *text = node_text(parser, end_node);
+
+        if (strcmp(text, ";") != 0) {
+            MXDiagnostic diag = {
+                .range = range,
+                .kind = MX_DIAG_SYNTAX_ERROR_EXPECTED_SEMICOLON,
+            };
+            arraylist_add(parser->permanent_arena, &parser->diagnostics, diag);
+        }
+    }
+
     AstNodeRef self_ref = parser->nodes.size;
 
-    printf("%d: %s(%b): ", self_ref, ts_node_type(node),
-           ts_node_is_named(node));
-    printf("`%.*s`\n", (int)ts_node_end_byte(node) - ts_node_start_byte(node),
-           parser->src + ts_node_start_byte(node));
-
     // Store the node
-    AstNode ast_node = {.self_ref = self_ref,
-                        .type = type,
-                        .text = text,
-                        .range = range,
-                        .children = {0}};
-    arraylist_init(parser->permanent_arena, &ast_node.children, 24);
+    AstNode ast_node = {
+        .self_ref = self_ref, .type = type, .text = text, .range = range};
+    ast_node.children =
+        arena_alloc_struct(parser->permanent_arena, AstNodeRefList);
+    arraylist_init(parser->permanent_arena, ast_node.children, 24);
+    ast_node.named_children = hashmap_init(parser->permanent_arena);
     arraylist_add(parser->permanent_arena, &parser->nodes, ast_node);
 
     for (size_t i = 0; i < ts_node_named_child_count(node); i++) {
         TSNode child = ts_node_named_child(node, i);
         AstNodeRef child_ref = walk_tree(parser, child);
-        arraylist_add(parser->permanent_arena, &ast_node.children, child_ref);
+        arraylist_add(parser->permanent_arena, ast_node.children, child_ref);
+
+        // Get the name of the child
+        const char *name = ts_node_field_name_for_named_child(node, i);
+        if (name != NULL) {
+            hashmap_set(parser->permanent_arena, ast_node.named_children, name,
+                        (void *)child_ref);
+        }
     }
 
     arena_release(&scratch);
+
+    fflush(stderr);
 
     return self_ref;
 }

@@ -21,7 +21,8 @@ typedef struct {
     const char *type; // Owned by the permanent arena
     MXRange range;
     const char *text; // Owned by the permanent arena
-    AstNodeRefList children;
+    AstNodeRefList *children;
+    HashMap *named_children;
 } AstNode;
 
 typedef ArrayList(AstNode) AstNodeList;

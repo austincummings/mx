@@ -37,6 +37,7 @@ module.exports = grammar({
     _decl: $ => seq(choice($.struct_decl, $.fn_decl, $.var_decl, $.const_decl)),
 
     fn_decl: $ => seq(
+      optional("comptime"),
       "fn",
       field("name", $.identifier),
       optional(seq("[", field("comptime_params", optional($.param_list)), "]")),
@@ -73,15 +74,30 @@ module.exports = grammar({
 
     // Statements
 
-    _stmt: $ => choice($.break_stmt, $.continue_stmt, $.return_stmt, $.if_stmt, $.loop_stmt, $.assign_stmt, $.expr_stmt),
+    _stmt: $ => choice(
+      $.break_stmt,
+      $.continue_stmt,
+      $.return_stmt,
+      $.if_stmt,
+      $.loop_stmt,
+      $.assign_stmt,
+      $.expr_stmt,
+    ),
 
-    expr_stmt: $ => seq(field("expr", $._expr), ";"),
+    _stmt_list: $ => repeat1(
+      choice(
+        $._stmt,
+        $._decl
+      )
+    ),
 
-    break_stmt: $ => seq("break", ";"),
+    expr_stmt: $ => seq(field("expr", $._expr), field("semi", ";")),
 
-    continue_stmt: $ => seq("continue", ";"),
+    break_stmt: $ => seq("break", field("semi", ";")),
 
-    return_stmt: $ => seq("return", field("expr", $._expr), ";"),
+    continue_stmt: $ => seq("continue", field("semi", ";")),
+
+    return_stmt: $ => seq("return", field("expr", $._expr), field("semi", ";")),
 
     if_stmt: $ => seq(
       "if",
@@ -99,7 +115,7 @@ module.exports = grammar({
       field("lhs", $._expr),
       "=",
       field("rhs", $._expr),
-      ";",
+      field("semi", ";"),
     ),
 
     // Expressions
@@ -152,7 +168,7 @@ module.exports = grammar({
       field("name", optional($.identifier)),
       "{",
       field("fields", optional($.struct_field_expr_list)),
-      "}",
+      "}"
     )),
 
     struct_field_expr_list: $ => seq(
@@ -205,8 +221,8 @@ module.exports = grammar({
 
     block: $ => seq(
       "{",
-      repeat(choice($._stmt, $._decl)),
-      "}",
+      optional($._stmt_list),
+      field("end", "}"),
     ),
 
     int_literal: $ => /\d+/,

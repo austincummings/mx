@@ -45,6 +45,18 @@
       "type": "SEQ",
       "members": [
         {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "comptime"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
           "type": "STRING",
           "value": "fn"
         },
@@ -360,6 +372,22 @@
         }
       ]
     },
+    "_stmt_list": {
+      "type": "REPEAT1",
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "_stmt"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "_decl"
+          }
+        ]
+      }
+    },
     "expr_stmt": {
       "type": "SEQ",
       "members": [
@@ -372,8 +400,12 @@
           }
         },
         {
-          "type": "STRING",
-          "value": ";"
+          "type": "FIELD",
+          "name": "semi",
+          "content": {
+            "type": "STRING",
+            "value": ";"
+          }
         }
       ]
     },
@@ -385,8 +417,12 @@
           "value": "break"
         },
         {
-          "type": "STRING",
-          "value": ";"
+          "type": "FIELD",
+          "name": "semi",
+          "content": {
+            "type": "STRING",
+            "value": ";"
+          }
         }
       ]
     },
@@ -398,8 +434,12 @@
           "value": "continue"
         },
         {
-          "type": "STRING",
-          "value": ";"
+          "type": "FIELD",
+          "name": "semi",
+          "content": {
+            "type": "STRING",
+            "value": ";"
+          }
         }
       ]
     },
@@ -419,8 +459,12 @@
           }
         },
         {
-          "type": "STRING",
-          "value": ";"
+          "type": "FIELD",
+          "name": "semi",
+          "content": {
+            "type": "STRING",
+            "value": ";"
+          }
         }
       ]
     },
@@ -524,8 +568,12 @@
           }
         },
         {
-          "type": "STRING",
-          "value": ";"
+          "type": "FIELD",
+          "name": "semi",
+          "content": {
+            "type": "STRING",
+            "value": ";"
+          }
         }
       ]
     },
@@ -1539,24 +1587,24 @@
           "value": "{"
         },
         {
-          "type": "REPEAT",
-          "content": {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "_stmt"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "_decl"
-              }
-            ]
-          }
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_stmt_list"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
         },
         {
-          "type": "STRING",
-          "value": "}"
+          "type": "FIELD",
+          "name": "end",
+          "content": {
+            "type": "STRING",
+            "value": "}"
+          }
         }
       ]
     },

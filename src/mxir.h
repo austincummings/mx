@@ -110,9 +110,10 @@ typedef struct {
 typedef ArrayList(MxirNode) MxirNodeList;
 
 typedef struct {
-    const char *src;    // Owned by the permanent arena
     MxirNodeList nodes; // Owned by the permanent arena
     MXDiagnosticList diagnostics;
 } Mxir;
+
+Mxir *mxir_new(Arena *a);
 
 #endif // _MX_MXIR_H

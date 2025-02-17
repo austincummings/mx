@@ -66,6 +66,8 @@
  "continue"
  "map"
  "to"
+ "comptime"
+ "new"
 ] @keyword
 
 [

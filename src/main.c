@@ -2,7 +2,9 @@
 #include <string.h>
 
 #include "ast.h"
+#include "debug.h"
 #include "io.h"
+#include "loc.h"
 #include "mem.h"
 #include "parser.h"
 #include "sema.h"
@@ -18,6 +20,15 @@ int compile() {
     const char *src = read_from_stdin(&permanent_arena);
     Ast *ast = parse(&permanent_arena, src);
     assert(ast != NULL);
+    // Emit diagnostics
+    for (size_t i = 0; i < ast->diagnostics.size; i++) {
+        MXDiagnostic diag = *arraylist_get(&ast->diagnostics, i);
+        const char *kind_str =
+            mx_diagnostic_kind_to_string(&permanent_arena, diag.kind);
+        printf("%s: %s\n", kind_str,
+               mx_range_to_string(&permanent_arena, diag.range));
+    }
+
     analyze(&permanent_arena, ast);
     codegen();
     const char *out = emit();
@@ -30,6 +41,8 @@ void usage() {
 }
 
 int main(int argc, char *argv[]) {
+    setup_signal_handler();
+
     if (argc != 2) {
         usage();
         return 1;
