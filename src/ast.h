@@ -5,6 +5,7 @@
 #include "diag.h"
 #include "loc.h"
 #include "map.h"
+#include "str.h"
 #include <stdint.h>
 
 typedef uint32_t AstNodeRef;
@@ -17,10 +18,12 @@ typedef struct {
 typedef ArrayList(AstNodeRef) AstNodeRefList;
 
 typedef struct {
+    String *type;
+    String *text;
+
     AstNodeRef self_ref;
-    const char *type; // Owned by the permanent arena
     MXRange range;
-    const char *text; // Owned by the permanent arena
+
     AstNodeRefList *children;
     HashMap *named_children;
 } AstNode;

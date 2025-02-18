@@ -33,6 +33,8 @@ int compile() {
     codegen();
     const char *out = emit();
     printf("%s\n", out);
+    fprintf(stderr, "Permanent arena size: %zu bytes\n",
+            permanent_arena.committed);
     return 0;
 }
 

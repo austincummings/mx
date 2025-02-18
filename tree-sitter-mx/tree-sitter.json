@@ -8,8 +8,8 @@
       "file-types": [
         "mx"
       ],
-      "highlights": "queries/highlights.scm",
-      "locals": "queries/locals.scm",
+      "highlights": "queries/mx/highlights.scm",
+      "locals": "queries/mx/locals.scm",
       "injection-regex": "^mx$"
     }
   ],

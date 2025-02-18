@@ -2,6 +2,7 @@
 #include "array_list.h"
 #include "debug.h"
 #include "mem.h"
+#include "str.h"
 
 static void emit(MXSema *sema, MxirNode node) {
     arraylist_add(sema->permanent_arena, &sema->ir->nodes, node);
@@ -52,6 +53,14 @@ static void error(MXSema *sema, MXDiagnosticKind kind, MXRange range) {
 //     }
 // }
 
+static MXEnvRef mk_env(MXSema *sema, MXEnvRef parent_ref) {
+    MXEnv env = {0};
+    env.parent_ref = parent_ref;
+    env.members = hashmap_init(sema->permanent_arena);
+    arraylist_add(sema->permanent_arena, sema->envs, env);
+    return sema->envs->size - 1;
+}
+
 static void bind_node(MXSema *sema, AstNodeRef node_ref, MXEnvRef env_ref);
 
 static void bind_source_file(MXSema *sema, AstNodeRef node_ref,
@@ -70,7 +79,7 @@ static void bind_fn_decl(MXSema *sema, AstNodeRef node_ref, MXEnvRef env_ref) {
     // Get the name node
     AstNodeRef name_ref = (AstNodeRef)hashmap_get(node->named_children, "name");
     AstNode *name_node = arraylist_get(&sema->ast->nodes, name_ref);
-    const char *name = name_node->text;
+    String *name = name_node->text;
     debug("Function name: %s\n", name);
 }
 
@@ -94,10 +103,10 @@ static void bind_node(MXSema *sema, AstNodeRef node_ref, MXEnvRef env_ref) {
     assert(sema != NULL);
 
     AstNode *node = arraylist_get(&sema->ast->nodes, node_ref);
-    const char *type = node->type;
+    String *type = node->type;
 
     for (size_t i = 0; i < sizeof(bind_fns) / sizeof(bind_fns[0]); i++) {
-        if (strcmp(type, bind_fns[i].type) == 0) {
+        if (string_eq_cstr(type, bind_fns[i].type) == 0) {
             bind_fns[i].fn(sema, node_ref, env_ref);
             return;
         }

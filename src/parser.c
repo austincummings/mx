@@ -6,22 +6,19 @@
 #include "debug.h"
 #include "mem.h"
 #include "parser.h"
+#include "str.h"
 
-static const char *node_text(MXParser *parser, TSNode node) {
-    const char *text =
-        arena_alloc(parser->permanent_arena,
-                    ts_node_end_byte(node) - ts_node_start_byte(node) + 1);
-    memcpy((void *)text, parser->src + ts_node_start_byte(node),
-           ts_node_end_byte(node) - ts_node_start_byte(node));
-    return text;
+static String *node_text(Arena *a, const char *src, TSNode node) {
+    const char *text = src + ts_node_start_byte(node);
+    String *s =
+        string_new(a, text, ts_node_end_byte(node) - ts_node_start_byte(node));
+    return s;
 }
 
-static const char *node_type(MXParser *parser, TSNode node) {
-    const char *type_orig = ts_node_type(node);
-    const char *type =
-        arena_alloc(parser->permanent_arena, strlen(type_orig) + 1);
-    memcpy((void *)type, type_orig, strlen(type_orig) + 1);
-    return type;
+static String *node_type(Arena *a, TSNode node) {
+    const char *text = ts_node_type(node);
+    String *s = string_new(a, text, strlen(text));
+    return s;
 }
 
 static AstNodeRef walk_tree(MXParser *parser, TSNode node) {
@@ -41,8 +38,8 @@ static AstNodeRef walk_tree(MXParser *parser, TSNode node) {
             },
     };
 
-    const char *type = node_type(parser, node);
-    const char *text = node_text(parser, node);
+    String *type = node_type(parser->permanent_arena, node);
+    String *text = node_text(&scratch, parser->src, node);
 
     // Store any syntax errors
     if (ts_node_is_error(node)) {
@@ -54,14 +51,14 @@ static AstNodeRef walk_tree(MXParser *parser, TSNode node) {
     }
 
     // TODO: Refactor out extra syntax checks
-    if (strcmp(type, "block") == 0) {
+    if (string_eq_cstr(type, "block")) {
         // Check that the block has a "end" field
         TSNode end_node =
             ts_node_child_by_field_name(node, "end", strlen("end"));
         assert(!ts_node_is_null(end_node));
-        const char *text = node_text(parser, end_node);
+        String *text = node_text(&scratch, parser->src, end_node);
 
-        if (strcmp(text, "}") != 0) {
+        if (string_eq_cstr(text, "}")) {
             MXDiagnostic diag = {
                 .range = range,
                 .kind = MX_DIAG_SYNTAX_ERROR_EXPECTED_END_BRACE,
@@ -70,23 +67,25 @@ static AstNodeRef walk_tree(MXParser *parser, TSNode node) {
         }
     }
 
-    if (strcmp(type, "break_stmt") == 0 || strcmp(type, "continue_stmt") == 0 ||
-        strcmp(type, "return_stmt") == 0 || strcmp(type, "assign_stmt") == 0 ||
-        strcmp(type, "expr_stmt") == 0) {
-        // Check that the node has a "semi" field that is a semicolon
-        TSNode end_node =
-            ts_node_child_by_field_name(node, "semi", strlen("semi"));
-        assert(!ts_node_is_null(end_node));
-        const char *text = node_text(parser, end_node);
-
-        if (strcmp(text, ";") != 0) {
-            MXDiagnostic diag = {
-                .range = range,
-                .kind = MX_DIAG_SYNTAX_ERROR_EXPECTED_SEMICOLON,
-            };
-            arraylist_add(parser->permanent_arena, &parser->diagnostics, diag);
-        }
-    }
+    // if (strcmp(type, "break_stmt") == 0 || strcmp(type, "continue_stmt") == 0
+    // ||
+    //     strcmp(type, "return_stmt") == 0 || strcmp(type, "assign_stmt") == 0
+    //     || strcmp(type, "expr_stmt") == 0) {
+    //     // Check that the node has a "semi" field that is a semicolon
+    //     TSNode end_node =
+    //         ts_node_child_by_field_name(node, "semi", strlen("semi"));
+    //     assert(!ts_node_is_null(end_node));
+    //     const char *text = node_text(&scratch, parser->src, end_node);
+    //
+    //     if (strcmp(text, ";") != 0) {
+    //         MXDiagnostic diag = {
+    //             .range = range,
+    //             .kind = MX_DIAG_SYNTAX_ERROR_EXPECTED_SEMICOLON,
+    //         };
+    //         arraylist_add(parser->permanent_arena, &parser->diagnostics,
+    //         diag);
+    //     }
+    // }
 
     AstNodeRef self_ref = parser->nodes.size;
 
