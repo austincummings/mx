@@ -4,17 +4,22 @@ use tree_sitter::{Node, Tree};
 
 use crate::{
     ast::{Ast, AstNode, AstNodeRef},
-    diag::{Diagnostic, DiagnosticKind, Position, Range},
+    diag::{Diagnostic, DiagnosticKind, Point, Range},
+    source_file::UnparsedSourceFile,
 };
 
-pub struct Parser {
+pub struct Parser<'a> {
+    file: &'a UnparsedSourceFile,
+    tree: Tree,
     ast: Ast,
     diagnostics: Vec<Diagnostic>,
 }
 
-impl Parser {
-    pub fn new() -> Self {
+impl<'a> Parser<'a> {
+    pub fn new(file: &'a UnparsedSourceFile, tree: Tree) -> Self {
         Self {
+            file,
+            tree,
             ast: Ast::new(),
             diagnostics: Vec::new(),
         }
@@ -22,12 +27,14 @@ impl Parser {
 
     /// Parses the given input string and returns an AST. The parser can only be
     /// used once, and is destroyed after parsing.
-    pub fn parse(mut self, path: &str, tree: &Tree, src: &str) -> (Ast, Vec<Diagnostic>) {
-        let root_node = tree.root_node();
-
+    pub fn parse(mut self) -> (Ast, Vec<Diagnostic>) {
         // Walk the tree and convert TreeSitter nodes to MXNodes
-        self.ast.0.clear();
-        self.walk_tree(path, root_node, src);
+        let tree = self.tree.clone();
+        self.walk_tree(
+            self.file.file.path.as_str(),
+            tree.root_node().clone(),
+            self.file.file.src.as_str(),
+        );
 
         (self.ast, self.diagnostics)
     }
@@ -37,11 +44,11 @@ impl Parser {
         let end = node.end_position();
 
         let range = Range {
-            start: Position {
+            start: Point {
                 row: start.row,
                 col: start.column,
             },
-            end: Position {
+            end: Point {
                 row: end.row,
                 col: end.column,
             },

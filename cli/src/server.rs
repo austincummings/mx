@@ -1,14 +1,15 @@
-use mx::source_file::SourceFile;
+use mx::diag::Diagnostic;
+use mx::source_file::{AnalyzedSourceFile, ParsedSourceFile, UnparsedSourceFile};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tower_lsp::jsonrpc::Error;
 use tower_lsp::lsp_types::{
-    DidChangeTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-    GotoDefinitionParams, GotoDefinitionResponse, Hover, HoverContents, HoverParams,
-    HoverProviderCapability, InitializeParams, InitializeResult, MarkedString, OneOf, SaveOptions,
-    ServerCapabilities, ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind,
+    Diagnostic as LspDiagnostic, DidChangeTextDocumentParams, DidOpenTextDocumentParams,
+    DidSaveTextDocumentParams, GotoDefinitionParams, GotoDefinitionResponse, Hover, HoverContents,
+    HoverParams, HoverProviderCapability, InitializeParams, InitializeResult, MarkedString, OneOf,
+    SaveOptions, ServerCapabilities, ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind,
     TextDocumentSyncOptions, TextDocumentSyncSaveOptions,
 };
 use tower_lsp::{Client, LanguageServer};
@@ -16,15 +17,49 @@ use tower_lsp::{Client, LanguageServer};
 #[derive(Debug)]
 pub struct MXLanguageServer {
     pub client: Client,
-    pub documents: Arc<Mutex<HashMap<String, SourceFile>>>,
+    pub files: Arc<Mutex<HashMap<String, AnalyzedSourceFile>>>,
 }
 
 impl MXLanguageServer {
     pub fn new(client: Client) -> Self {
         Self {
             client,
-            documents: Arc::new(Mutex::new(HashMap::new())),
+            files: Arc::new(Mutex::new(HashMap::new())),
         }
+    }
+}
+impl MXLanguageServer {
+    fn convert_diagnostics(&self, diagnostics: Vec<Diagnostic>) -> Vec<LspDiagnostic> {
+        diagnostics
+            .into_iter()
+            .map(|diagnostic| LspDiagnostic {
+                range: tower_lsp::lsp_types::Range {
+                    start: tower_lsp::lsp_types::Position {
+                        line: diagnostic.range.start.row as u32,
+                        character: diagnostic.range.start.col as u32,
+                    },
+                    end: tower_lsp::lsp_types::Position {
+                        line: diagnostic.range.end.row as u32,
+                        character: diagnostic.range.end.col as u32,
+                    },
+                },
+                severity: Some(tower_lsp::lsp_types::DiagnosticSeverity::ERROR),
+                code: None,
+                code_description: None,
+                source: Some("mx".to_string()),
+                message: diagnostic.kind.message(),
+                related_information: None,
+                tags: None,
+                data: None,
+            })
+            .collect()
+    }
+
+    async fn send_diagnostics(&self, uri: tower_lsp::lsp_types::Url, diagnostics: Vec<Diagnostic>) {
+        let lsp_diagnostics = self.convert_diagnostics(diagnostics);
+        self.client
+            .publish_diagnostics(uri, lsp_diagnostics, None)
+            .await;
     }
 }
 
@@ -75,51 +110,55 @@ impl LanguageServer for MXLanguageServer {
         eprintln!("Opened {}", uri.path());
 
         let text = params.text_document.text;
-        let src_file = SourceFile::new(uri.path().to_string(), text.as_str());
+        let src_file = UnparsedSourceFile::new(uri.path(), text.as_str());
+        let parsed_file = src_file.parse();
+        let analyzed_file = parsed_file.analyze();
 
-        self.documents
+        self.files
             .lock()
             .await
-            .insert(uri.to_string(), src_file);
+            .insert(uri.to_string(), analyzed_file.clone());
 
-        // TODO: Implement diagnostics gathering and publishing
+        let diagnostics = analyzed_file.file().diagnostics.clone();
+        self.send_diagnostics(uri, diagnostics).await;
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let uri = params.text_document.uri;
 
-        let src_file = self.documents.lock().await.get(&uri.to_string()).cloned();
+        let text = params
+            .content_changes
+            .get(0)
+            .map(|change| change.text.clone())
+            .unwrap_or_default();
 
-        if let Some(mut src_file) = src_file {
+        let mut files = self.files.lock().await;
+
+        if let Some(src_file) = files.get_mut(&uri.to_string()) {
             eprintln!("Changed {}", uri.path());
 
-            let text = params
-                .content_changes
-                .get(0)
-                .map(|change| change.text.clone())
-                .unwrap_or_default();
+            src_file.update(&text);
 
-            src_file.update_src(&text);
-
-            // TODO: Implement diagnostics gathering and publishing
+            let diagnostics = src_file.file().diagnostics.clone();
+            drop(files); // Release lock before async operation
+            self.send_diagnostics(uri, diagnostics).await;
         }
     }
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
         let uri = params.text_document.uri;
+        let text = params.text.unwrap_or_default();
 
-        let src_file = self.documents.lock().await.get(&uri.to_string()).cloned();
+        let mut files = self.files.lock().await;
 
-        if let Some(mut src_file) = src_file {
+        if let Some(src_file) = files.get_mut(&uri.to_string()) {
             eprintln!("Saved {}", uri.path());
 
-            let text = params.text.unwrap_or_default();
+            src_file.update(&text);
 
-            src_file.update_src(&text);
-
-            eprintln!("AST: {:#?}", src_file.ast());
-
-            // TODO: Implement diagnostics gathering and publishing
+            let diagnostics = src_file.file().diagnostics.clone();
+            drop(files); // Release lock before async operation
+            self.send_diagnostics(uri, diagnostics).await;
         }
     }
 

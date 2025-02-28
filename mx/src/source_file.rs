@@ -1,6 +1,12 @@
 use tree_sitter::Tree;
 
-use crate::{ast::Ast, diag::Diagnostic, parser::Parser};
+use crate::{
+    ast::{Ast, AstNode, AstNodeRef},
+    diag::Diagnostic,
+    mxir::Mxir,
+    parser::Parser,
+    sema::Sema,
+};
 
 extern "C" {
     pub fn tree_sitter_mx() -> tree_sitter::Language;
@@ -8,46 +14,28 @@ extern "C" {
 
 #[derive(Debug, Clone)]
 pub struct SourceFile {
-    path: String,
-    src: String,
-    ast: Ast,
-
-    diagnostics: Vec<Diagnostic>,
-
-    tree: tree_sitter::Tree,
+    pub path: String,
+    pub src: String,
+    pub diagnostics: Vec<Diagnostic>,
 }
 
-impl SourceFile {
-    pub fn new(path: String, src: &str) -> Self {
-        let (ast, diagnostics, tree) = Self::parse(src);
+#[derive(Debug, Clone)]
+pub struct UnparsedSourceFile {
+    pub file: SourceFile,
+}
 
-        SourceFile {
-            path,
-            src: src.to_string(),
-            ast,
-            diagnostics,
-            tree,
+impl UnparsedSourceFile {
+    pub fn new(path: &str, src: &str) -> Self {
+        UnparsedSourceFile {
+            file: SourceFile {
+                path: path.to_string(),
+                src: src.to_string(),
+                diagnostics: Vec::new(),
+            },
         }
     }
 
-    pub fn update_src(&mut self, src: &str) {
-        let (ast, diagnostics, tree) = Self::parse(src);
-
-        self.src = src.to_string();
-        self.ast = ast;
-        self.diagnostics = diagnostics;
-        self.tree = tree;
-    }
-
-    pub fn path(&self) -> &str {
-        &self.path
-    }
-
-    pub fn ast(&self) -> &Ast {
-        &self.ast
-    }
-
-    fn parse(src: &str) -> (Ast, Vec<Diagnostic>, Tree) {
+    pub fn parse(mut self) -> ParsedSourceFile {
         let language = unsafe { tree_sitter_mx() };
 
         let mut ts_parser = tree_sitter::Parser::new();
@@ -55,16 +43,93 @@ impl SourceFile {
             .set_language(&language)
             .expect("Error setting language");
 
-        let tree = ts_parser.parse(src, None).unwrap();
+        let tree = ts_parser.parse(self.file.src.as_str(), None).unwrap();
 
-        let parser = Parser::new();
-        let (ast, diagnostics) = parser.parse(&tree, src);
+        let parser = Parser::new(&self, tree.clone());
+        let (ast, diagnostics) = parser.parse();
 
-        (ast, diagnostics, tree)
+        self.file.diagnostics.extend(diagnostics);
+
+        ParsedSourceFile {
+            data: self.file,
+            tree,
+            ast,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ParsedSourceFile {
+    data: SourceFile,
+
+    tree: Tree,
+    ast: Ast,
+}
+
+impl ParsedSourceFile {
+    pub fn update(&mut self, src: &str) {
+        let src_file = UnparsedSourceFile::new(&self.data.path, src);
+        let parsed_file = src_file.parse();
+        self.data = parsed_file.data;
+        self.tree = parsed_file.tree;
+        self.ast = parsed_file.ast;
+    }
+
+    pub fn analyze(mut self) -> AnalyzedSourceFile {
+        let sema = Sema::new(&self);
+        let (mxir, diagnostics) = sema.analyze();
+
+        self.data.diagnostics.extend(diagnostics);
+
+        AnalyzedSourceFile {
+            file: self.data,
+            tree: self.tree,
+            ast: self.ast,
+            mxir,
+        }
+    }
+
+    pub fn path(&self) -> &str {
+        &self.data.path
+    }
+
+    pub fn ast(&self) -> &Ast {
+        &self.ast
+    }
+
+    pub fn node(&self, node_ref: AstNodeRef) -> Option<AstNode> {
+        self.ast.0.get(node_ref.0 as usize).cloned()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct AnalyzedSourceFile {
+    file: SourceFile,
+
+    tree: Tree,
+    ast: Ast,
+    mxir: Mxir,
+}
+
+impl AnalyzedSourceFile {
+    pub fn update(&mut self, src: &str) {
+        let src_file = UnparsedSourceFile::new(&self.file.path, src);
+        let parsed_file = src_file.parse();
+        let analyzed_file = parsed_file.analyze();
+        self.file = analyzed_file.file;
+        self.tree = analyzed_file.tree;
+        self.ast = analyzed_file.ast;
+        self.mxir = analyzed_file.mxir;
+    }
+
+    pub fn file(&self) -> &SourceFile {
+        &self.file
+    }
+
+    pub fn ast(&self) -> &Ast {
+        &self.ast
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-}
+mod tests {}

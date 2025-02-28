@@ -1,3 +1,4 @@
 [submodule "tree-sitter-mx"]
 	path = tree-sitter-mx
 	url = git@github.com:austincummings/tree-sitter-mx.git
+	branch = main
