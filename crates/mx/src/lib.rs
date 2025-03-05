@@ -1,4 +1,5 @@
 pub mod ast;
+pub mod c_emitter;
 pub mod comptime;
 pub mod diag;
 pub mod mxir;

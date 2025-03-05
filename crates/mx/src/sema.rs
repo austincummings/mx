@@ -4,7 +4,10 @@ use crate::{
     ast::{AstNode, AstNodeRef},
     comptime::{ComptimeBinding, ComptimeEnv, ComptimeValue, FnProto, ParamDecl},
     diag::{Diagnostic, DiagnosticKind, Range},
-    mxir::Mxir,
+    mxir::{
+        Mxir, MxirBlock, MxirFnDecl, MxirIntLiteral, MxirNode, MxirNodeData, MxirNodeRef,
+        MxirVarDecl,
+    },
     source_file::ParsedSourceFile,
 };
 
@@ -38,14 +41,18 @@ impl<'a> Sema<'a> {
         let source_file_node = self.file.node(source_file_node_ref);
 
         if let Some(source_file_node) = source_file_node {
-            self.env.push_scope(source_file_node.range);
-            for child_ref in source_file_node.children {
-                self.analyze_node(child_ref);
-            }
+            let mxir_source_file_node_ref = self.emit(
+                source_file_node_ref,
+                MxirNodeData::SourceFile(MxirBlock(vec![])),
+            );
 
-            // Lookup the entry point
+            self.env.push_scope(source_file_node.range);
+
+            let mut stmts = self.analyze_body(source_file_node_ref);
+
+            // Lookup the entry point and mimic a function call
             if let Some(main_fn_decl) = self.env.get("main").cloned() {
-                self.emit_fn(main_fn_decl, vec![]);
+                stmts.push(self.analyze_resolved_fn_call(main_fn_decl, vec![], vec![]));
             } else {
                 self.report(
                     source_file_node_ref,
@@ -53,12 +60,22 @@ impl<'a> Sema<'a> {
                 );
             }
 
+            // Update the source file node with the analyzed statements
+            let mxir_source_file_node = self
+                .mxir
+                .0
+                .get_mut(mxir_source_file_node_ref.0 as usize)
+                .unwrap();
+            if let MxirNodeData::SourceFile(mxir_source_file_node) = &mut mxir_source_file_node.data
+            {
+                mxir_source_file_node.0.extend(stmts);
+            }
+
             self.env.pop_scope();
-            eprintln!("Scopes: {:#?}", self.env);
         }
     }
 
-    fn analyze_node(&mut self, node_ref: AstNodeRef) {
+    fn analyze_node(&mut self, node_ref: AstNodeRef) -> MxirNodeRef {
         let node = self.node(node_ref);
         match node.kind.as_str() {
             "fn_decl" => self.analyze_fn_decl(node_ref),
@@ -66,12 +83,13 @@ impl<'a> Sema<'a> {
             "var_decl" => self.analyze_var_decl(node_ref),
             "block" => self.analyze_block(node_ref),
             _ => {
-                eprintln!("Unsupported node type: {}", node.kind);
+                // eprintln!("Unsupported node type: {}", node.kind);
+                self.emit_nop(node_ref, node.kind.as_str())
             }
         }
     }
 
-    fn analyze_fn_decl(&mut self, node_ref: AstNodeRef) {
+    fn analyze_fn_decl(&mut self, node_ref: AstNodeRef) -> MxirNodeRef {
         let node = self.node(node_ref);
 
         let proto_ref = node
@@ -107,7 +125,7 @@ impl<'a> Sema<'a> {
             .get("return_type")
             .copied()
             .expect("Return type not found");
-        let return_type = self.analyze_comptime_expr(return_type_ref);
+        let return_type = self.comptime_eval_comptime_expr(return_type_ref);
 
         let body_ref = node
             .named_children
@@ -123,8 +141,8 @@ impl<'a> Sema<'a> {
             if let Err(_) = self.env.declare_fn(
                 node_ref,
                 &name,
-                params,
                 comptime_params,
+                params,
                 return_type,
                 body_ref,
             ) {
@@ -132,9 +150,11 @@ impl<'a> Sema<'a> {
                 self.report(node_ref, DiagnosticKind::DuplicateDefinition);
             }
         }
+
+        self.emit_nop(node_ref, "fn_decl")
     }
 
-    fn analyze_const_decl(&mut self, node_ref: AstNodeRef) {
+    fn analyze_const_decl(&mut self, node_ref: AstNodeRef) -> MxirNodeRef {
         let node = self.node(node_ref);
 
         let name_ref = node
@@ -146,7 +166,7 @@ impl<'a> Sema<'a> {
         let name = name_node.text.as_str();
 
         let ty = if let Some(ty_ref) = node.named_children.get("type").copied() {
-            Some(self.analyze_comptime_expr(ty_ref))
+            Some(self.comptime_eval_comptime_expr(ty_ref))
         } else {
             None
         };
@@ -156,15 +176,17 @@ impl<'a> Sema<'a> {
             .get("value")
             .copied()
             .expect("Constant value not found");
-        let value = self.analyze_comptime_expr(value_ref);
+        let value = self.comptime_eval_comptime_expr(value_ref);
 
         if let Err(_) = self.env.declare_const(node_ref, name, ty, value) {
             // Report duplicate definition
             self.report(node_ref, DiagnosticKind::DuplicateDefinition);
         }
+
+        self.emit_nop(node_ref, node.kind.as_str())
     }
 
-    fn analyze_var_decl(&mut self, node_ref: AstNodeRef) {
+    fn analyze_var_decl(&mut self, node_ref: AstNodeRef) -> MxirNodeRef {
         let node = self.node(node_ref);
 
         let name_ref = node
@@ -176,36 +198,67 @@ impl<'a> Sema<'a> {
         let name = name_node.text.as_str();
 
         let ty = if let Some(ty_ref) = node.named_children.get("type").copied() {
-            Some(self.analyze_comptime_expr(ty_ref))
+            Some(self.comptime_eval_comptime_expr(ty_ref))
         } else {
             None
         };
 
-        let value_ref = node
-            .named_children
-            .get("value")
-            .copied()
-            .expect("Variable value not found");
+        let value_ref = node.named_children.get("value").copied();
 
-        if let Err(_) = self.env.declare_var(node_ref, name, ty, value_ref) {
+        let mxir_value_ref = if let Some(value_ref) = value_ref {
+            Some(self.analyze_expr(value_ref))
+        } else {
+            None
+        };
+
+        if let Err(_) = self.env.declare_var(node_ref, name, ty.clone()) {
             // Report duplicate definition
             self.report(node_ref, DiagnosticKind::DuplicateDefinition);
+            return self.emit_nop(node_ref, "duplicate definition");
         }
+
+        // Emit the variable declaration
+        self.emit(
+            node_ref,
+            MxirNodeData::VarDecl(MxirVarDecl {
+                name: name.to_string(),
+                ty,
+                value: mxir_value_ref,
+            }),
+        )
     }
 
-    fn analyze_block(&mut self, node_ref: AstNodeRef) {
+    fn analyze_block(&mut self, node_ref: AstNodeRef) -> MxirNodeRef {
         let node = self.node(node_ref);
 
         self.env.push_scope(node.range);
 
-        for child_ref in node.children {
-            self.analyze_node(child_ref);
-        }
+        let stmts = self.analyze_body(node_ref);
 
         self.env.pop_scope();
+
+        self.emit(node_ref, MxirNodeData::Block(MxirBlock(stmts)))
     }
 
-    fn analyze_comptime_expr(&mut self, node_ref: AstNodeRef) -> ComptimeValue {
+    fn analyze_body(&mut self, node_ref: AstNodeRef) -> Vec<MxirNodeRef> {
+        let node = self.node(node_ref);
+
+        let mut stmts = Vec::new();
+        for child_ref in node.children {
+            stmts.push(self.analyze_node(child_ref));
+        }
+
+        stmts
+    }
+
+    fn analyze_expr(&mut self, node_ref: AstNodeRef) -> MxirNodeRef {
+        let node = self.node(node_ref);
+        match node.kind.as_str() {
+            _ => self.emit_nop(node_ref, node.kind.as_str()),
+        }
+    }
+
+    fn comptime_eval_comptime_expr(&mut self, node_ref: AstNodeRef) -> ComptimeValue {
         let node = self.node(node_ref);
         assert!(node.kind == "comptime_expr");
 
@@ -234,12 +287,12 @@ impl<'a> Sema<'a> {
                     ComptimeValue::Undefined
                 }
             }
-            "fn_proto" => self.analyze_fn_proto(expr_node_ref),
+            "fn_proto" => self.comptime_eval_fn_proto(expr_node_ref),
             _ => panic!("Unsupported comptime expression: {}", expr_node.kind),
         }
     }
 
-    fn analyze_fn_proto(&mut self, expr_node_ref: AstNodeRef) -> ComptimeValue {
+    fn comptime_eval_fn_proto(&mut self, expr_node_ref: AstNodeRef) -> ComptimeValue {
         let expr_node = self.node(expr_node_ref);
 
         // Push a comptime scope for analyzing the function prototype
@@ -257,7 +310,7 @@ impl<'a> Sema<'a> {
             .get("return_type")
             .copied()
             .expect("Return type not found");
-        let return_type = self.analyze_comptime_expr(return_type_ref);
+        let return_type = self.comptime_eval_comptime_expr(return_type_ref);
 
         // Pop the comptime scope
         self.env.pop_scope();
@@ -306,7 +359,7 @@ impl<'a> Sema<'a> {
                     .get("type")
                     .copied()
                     .expect("Param type not found");
-                let param_ty = self.analyze_comptime_expr(param_type_ref);
+                let param_ty = self.comptime_eval_comptime_expr(param_type_ref);
 
                 // Create a placeholder value for the parameter
                 // In a real implementation, this would be filled in when the function is called
@@ -361,7 +414,7 @@ impl<'a> Sema<'a> {
                     .get("type")
                     .copied()
                     .expect("Param type not found");
-                let param_ty = self.analyze_comptime_expr(param_type_ref);
+                let param_ty = self.comptime_eval_comptime_expr(param_type_ref);
 
                 let param_decl = ParamDecl {
                     name: param_name,
@@ -374,32 +427,79 @@ impl<'a> Sema<'a> {
         params
     }
 
-    fn emit_fn(&mut self, binding: ComptimeBinding, comptime_args: Vec<(String, ComptimeValue)>) {
-        // Check that it is indeed a function
-        if let ComptimeValue::FnDecl(fn_decl) = &binding.value {
-            // Create a new environment with the root scope as the parent
-            let mut fn_env = ComptimeEnv::new();
+    fn analyze_resolved_fn_call(
+        &mut self,
+        binding: ComptimeBinding,
+        comptime_args: Vec<ComptimeValue>,
+        args: Vec<ComptimeValue>,
+    ) -> MxirNodeRef {
+        self.env.push_scope(self.node_range(binding.node_ref));
 
-            // Get the function node
-            let fn_node_range = self.node_range(binding.node_ref);
-
-            // Push a scope for the function
-            fn_env.push_scope(fn_node_range);
-
-            // Push a scope for the function arguments
-            fn_env.push_scope(fn_node_range);
-
-            // Assign the comptime args to the function environment
-            for (name, value) in comptime_args {
-                // Initialize the comptime parameter in the environment
-                let _ = fn_env.declare_const(binding.node_ref, &name, None, value.clone());
+        // Check that the binding comptime value is a function
+        if let ComptimeValue::FnDecl(fn_decl) = binding.value {
+            // Check that the function has the correct number of comptime parameters/args
+            if fn_decl.comptime_params.len() != comptime_args.len() {
+                self.report(binding.node_ref, DiagnosticKind::InvalidFunctionCall);
+                return self.emit_nop(binding.node_ref, "invalid function call");
             }
-
-            fn_env.pop_scope(); // Pop the scope for the function arguments
-            fn_env.pop_scope(); // Pop the scope for the function
         } else {
-            panic!("Not a function");
+            self.report(binding.node_ref, DiagnosticKind::InvalidFunctionCall);
+            return self.emit_nop(binding.node_ref, "invalid function call");
         }
+
+        let node = self.node(binding.node_ref);
+
+        let proto_node_ref = node
+            .named_children
+            .get("proto")
+            .copied()
+            .expect("Function proto node not found");
+        let proto_node = self.node(proto_node_ref);
+
+        let name_node_ref = proto_node
+            .named_children
+            .get("name")
+            .copied()
+            .expect("Function name node not found");
+        let name = self.node(name_node_ref).text;
+
+        let block_ref = node.named_children.get("body").unwrap().clone();
+
+        let mxir_body_ref = self.analyze_node(block_ref);
+
+        let fn_decl_ref = self.emit(
+            AstNodeRef(0),
+            MxirNodeData::FnDecl(MxirFnDecl {
+                name,
+                body: mxir_body_ref,
+            }),
+        );
+
+        self.env.pop_scope();
+
+        fn_decl_ref
+    }
+
+    fn emit(&mut self, ast_node: AstNodeRef, data: MxirNodeData) -> MxirNodeRef {
+        let self_ref = MxirNodeRef(self.mxir.0.len() as u32);
+        let mxir_node = MxirNode {
+            self_ref,
+            ast_node,
+            data,
+        };
+        self.mxir.0.push(mxir_node);
+        self_ref
+    }
+
+    fn emit_nop(&mut self, ast_node: AstNodeRef, msg: &str) -> MxirNodeRef {
+        let self_ref = MxirNodeRef(self.mxir.0.len() as u32);
+        let mxir_node = MxirNode {
+            self_ref,
+            ast_node,
+            data: MxirNodeData::Nop(msg.to_string()),
+        };
+        self.mxir.0.push(mxir_node);
+        self_ref
     }
 
     fn report(&mut self, node_ref: AstNodeRef, diag_kind: DiagnosticKind) {

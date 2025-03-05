@@ -5,7 +5,7 @@ pub enum ComptimeValue {
     Undefined,
     FnDecl(Box<FnDecl>),
     FnProto(Box<FnProto>),
-    VarDecl(Box<VarDecl>),
+    // VarDecl(Box<VarDecl>),
     ComptimeInt(i128),
     ComptimeFloat(f64),
     ComptimeString(String),
@@ -39,7 +39,7 @@ pub struct ParamDecl {
 pub struct VarDecl {
     pub name: String,
     pub ty: Option<ComptimeValue>,
-    pub value_ref: AstNodeRef,
+    pub value_ref: Option<AstNodeRef>,
 }
 
 #[derive(Debug, Clone)]
@@ -135,7 +135,6 @@ impl ComptimeEnv {
         node_ref: AstNodeRef,
         name: &str,
         ty: Option<ComptimeValue>,
-        value_ref: AstNodeRef,
     ) -> Result<(), &'static str> {
         if self.0.get(name).is_some() {
             return Err("Duplicate declaration");
@@ -146,11 +145,7 @@ impl ComptimeEnv {
             ComptimeBinding {
                 node_ref,
                 ty: ty.clone(),
-                value: ComptimeValue::VarDecl(Box::new(VarDecl {
-                    name: name.to_string(),
-                    ty,
-                    value_ref,
-                })),
+                value: ComptimeValue::Undefined,
             },
         );
 
@@ -258,41 +253,41 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_declare_var() {
-        let mut env = ComptimeEnv::new();
-        env.push_scope(make_range(0, 100));
+    // #[test]
+    // fn test_declare_var() {
+    //     let mut env = ComptimeEnv::new();
+    //     env.push_scope(make_range(0, 100));
 
-        let var_node_ref = AstNodeRef(4);
-        let var_value_ref = AstNodeRef(5);
-        let var_type = Some(ComptimeValue::Type);
+    //     let var_node_ref = AstNodeRef(4);
+    //     let var_value_ref = Some(AstNodeRef(5));
+    //     let var_type = Some(ComptimeValue::Type);
 
-        env.declare_var(var_node_ref, "my_var", var_type, var_value_ref);
+    //     env.declare_var(var_node_ref, "my_var", var_type, var_value_ref);
 
-        let binding = env.get("my_var").unwrap();
-        assert!(matches!(binding.node_ref, AstNodeRef(4)));
+    //     let binding = env.get("my_var").unwrap();
+    //     assert!(matches!(binding.node_ref, AstNodeRef(4)));
 
-        // Check the type
-        if let Some(ty) = &binding.ty {
-            assert!(matches!(ty, ComptimeValue::Type));
-        } else {
-            panic!("Expected Some type");
-        }
+    //     // Check the type
+    //     if let Some(ty) = &binding.ty {
+    //         assert!(matches!(ty, ComptimeValue::Type));
+    //     } else {
+    //         panic!("Expected Some type");
+    //     }
 
-        // Check the value is a VarDecl with the expected properties
-        if let ComptimeValue::VarDecl(var_decl) = &binding.value {
-            assert_eq!(var_decl.name, "my_var");
-            assert!(matches!(var_decl.value_ref, AstNodeRef(5)));
+    //     // Check the value is a VarDecl with the expected properties
+    //     if let ComptimeValue::VarDecl(var_decl) = &binding.value {
+    //         assert_eq!(var_decl.name, "my_var");
+    //         assert!(matches!(var_decl.value_ref, Some(AstNodeRef(5))));
 
-            if let Some(ty) = &var_decl.ty {
-                assert!(matches!(ty, ComptimeValue::Type));
-            } else {
-                panic!("Expected Some type in VarDecl");
-            }
-        } else {
-            panic!("Expected VarDecl");
-        }
-    }
+    //         if let Some(ty) = &var_decl.ty {
+    //             assert!(matches!(ty, ComptimeValue::Type));
+    //         } else {
+    //             panic!("Expected Some type in VarDecl");
+    //         }
+    //     } else {
+    //         panic!("Expected VarDecl");
+    //     }
+    // }
 
     #[test]
     fn test_lookup_across_scopes() {
@@ -379,13 +374,6 @@ mod tests {
             body_ref: AstNodeRef(1),
         }));
 
-        // Test VarDecl
-        let var_decl = ComptimeValue::VarDecl(Box::new(VarDecl {
-            name: "test_var".to_string(),
-            ty: Some(ComptimeValue::Type),
-            value_ref: AstNodeRef(2),
-        }));
-
         // Test primitive values
         let int_val = ComptimeValue::ComptimeInt(42);
         let float_val = ComptimeValue::ComptimeFloat(3.14);
@@ -395,7 +383,6 @@ mod tests {
 
         // Use pattern matching to check variant types
         assert!(matches!(fn_decl, ComptimeValue::FnDecl(_)));
-        assert!(matches!(var_decl, ComptimeValue::VarDecl(_)));
         assert!(matches!(int_val, ComptimeValue::ComptimeInt(42)));
         assert!(matches!(float_val, ComptimeValue::ComptimeFloat(_)));
         assert!(matches!(string_val, ComptimeValue::ComptimeString(_)));
