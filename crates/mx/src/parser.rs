@@ -4,7 +4,8 @@ use tree_sitter::{Node, Tree};
 
 use crate::{
     ast::{Ast, AstNode, AstNodeRef},
-    diag::{Diagnostic, DiagnosticKind, Point, Range},
+    diag::{Diagnostic, DiagnosticKind},
+    position::{Point, Range},
     source_file::UnparsedSourceFile,
 };
 

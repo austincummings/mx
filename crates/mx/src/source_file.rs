@@ -2,6 +2,7 @@ use tree_sitter::Tree;
 
 use crate::{
     ast::{Ast, AstNode, AstNodeRef},
+    c_emitter::CEmitter,
     diag::Diagnostic,
     mxir::Mxir,
     parser::Parser,
@@ -82,7 +83,7 @@ impl ParsedSourceFile {
         self.data.diagnostics.extend(diagnostics);
 
         AnalyzedSourceFile {
-            file: self.data,
+            data: self.data,
             tree: self.tree,
             ast: self.ast,
             mxir,
@@ -104,7 +105,7 @@ impl ParsedSourceFile {
 
 #[derive(Debug, Clone)]
 pub struct AnalyzedSourceFile {
-    file: SourceFile,
+    data: SourceFile,
 
     tree: Tree,
     ast: Ast,
@@ -113,10 +114,59 @@ pub struct AnalyzedSourceFile {
 
 impl AnalyzedSourceFile {
     pub fn update(&mut self, src: &str) {
+        let src_file = UnparsedSourceFile::new(&self.data.path, src);
+        let parsed_file = src_file.parse();
+        let analyzed_file = parsed_file.analyze();
+        self.data = analyzed_file.data;
+        self.tree = analyzed_file.tree;
+        self.ast = analyzed_file.ast;
+        self.mxir = analyzed_file.mxir;
+    }
+
+    pub fn file(&self) -> &SourceFile {
+        &self.data
+    }
+
+    pub fn ast(&self) -> &Ast {
+        &self.ast
+    }
+
+    pub fn mxir(&self) -> &Mxir {
+        &self.mxir
+    }
+
+    pub fn emit_c(mut self) -> CSourceFile {
+        let c_emitter = CEmitter::new(&self);
+        let (c, diagnostics) = c_emitter.emit();
+
+        self.data.diagnostics.extend(diagnostics);
+
+        CSourceFile {
+            file: self.data,
+            tree: self.tree,
+            ast: self.ast,
+            mxir: self.mxir,
+            c,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct CSourceFile {
+    file: SourceFile,
+
+    tree: Tree,
+    ast: Ast,
+    mxir: Mxir,
+    c: String,
+}
+
+impl CSourceFile {
+    pub fn update(&mut self, src: &str) {
         let src_file = UnparsedSourceFile::new(&self.file.path, src);
         let parsed_file = src_file.parse();
         let analyzed_file = parsed_file.analyze();
-        self.file = analyzed_file.file;
+        self.file = analyzed_file.data;
         self.tree = analyzed_file.tree;
         self.ast = analyzed_file.ast;
         self.mxir = analyzed_file.mxir;
@@ -126,8 +176,8 @@ impl AnalyzedSourceFile {
         &self.file
     }
 
-    pub fn ast(&self) -> &Ast {
-        &self.ast
+    pub fn c(&self) -> &str {
+        &self.c
     }
 }
 

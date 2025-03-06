@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::diag::Range;
+use crate::position::Range;
 
 #[derive(Debug, Clone)]
 pub struct Ast(pub Vec<AstNode>);

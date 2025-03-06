@@ -1,6 +1,6 @@
 mod server;
 
-use mx::{sema::Sema, source_file::UnparsedSourceFile};
+use mx::source_file::UnparsedSourceFile;
 use server::MXLanguageServer;
 use std::io::Read as _;
 use std::io::*;
@@ -31,9 +31,9 @@ async fn main() {
                 .expect("Failed to read from stdin");
             let src_file = UnparsedSourceFile::new("/dev/stdin".into(), input.as_str());
             let parsed_src_file = src_file.parse();
-
-            let sema = Sema::new(&parsed_src_file);
-            let _analyzed_file = sema.analyze();
+            let analyzed_file = parsed_src_file.analyze();
+            let c_file = analyzed_file.emit_c();
+            println!("{}", c_file.c());
         }
         "version" => {
             let version = env!("CARGO_PKG_VERSION");

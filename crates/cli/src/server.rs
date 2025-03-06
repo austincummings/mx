@@ -1,5 +1,5 @@
 use mx::diag::Diagnostic;
-use mx::source_file::{AnalyzedSourceFile, ParsedSourceFile, UnparsedSourceFile};
+use mx::source_file::{AnalyzedSourceFile, UnparsedSourceFile};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
