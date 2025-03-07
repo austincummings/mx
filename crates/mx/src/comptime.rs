@@ -15,6 +15,7 @@ pub enum ComptimeValue {
 
 #[derive(Debug, Clone)]
 pub struct FnDecl {
+    pub node_ref: AstNodeRef,
     pub name: String,
     pub comptime_params: Vec<ParamDecl>,
     pub params: Vec<ParamDecl>,
@@ -95,6 +96,7 @@ impl ComptimeEnv {
                 node_ref,
                 ty: None,
                 value: ComptimeValue::FnDecl(Box::new(FnDecl {
+                    node_ref: node_ref,
                     name: name.to_string(),
                     comptime_params,
                     params,
@@ -372,6 +374,7 @@ mod tests {
     fn test_comptime_value_variants() {
         // Test FnDecl
         let fn_decl = ComptimeValue::FnDecl(Box::new(FnDecl {
+            node_ref: AstNodeRef(1),
             name: "test_fn".to_string(),
             comptime_params: vec![],
             params: vec![],

@@ -1,6 +1,7 @@
-const FORTY_TWO = 42;
+fn f(): 0 {
+    return 0;
+}
 
-fn main(): FORTY_TWO {
-    return A;
-    return 42;
+fn main(): 0 {
+    return f();
 }
