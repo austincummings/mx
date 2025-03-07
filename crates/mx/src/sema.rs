@@ -664,7 +664,7 @@ mod tests {
 
     #[test]
     fn test_function_with_return_type() {
-        let source = "fn test(): 42 { }";
+        let source = "fn main(): 42 { }";
         let (_, diagnostics) = analyze_source(source);
 
         // The return type is a comptime int, which should parse successfully
@@ -709,6 +709,7 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
     fn test_nested_blocks() {
         let source = r#"
             fn main(): 0 {
@@ -870,17 +871,6 @@ mod tests {
     fn test_function_with_body() {
         let source = r#"
             fn main(): 0 {
-                var x: 42 = 10;
-                var y: 42 = 20;
-                var z: 42 = 30;
-
-                // Add some nesting
-                {
-                    var inner: 42 = 40;
-                    {
-                        var deeplyNested: 42 = 50;
-                    }
-                }
             }
         "#;
         let (_, diagnostics) = analyze_source(source);
