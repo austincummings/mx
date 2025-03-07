@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Path to the commit message file
+COMMIT_MSG_FILE=$1
+
+# Get the commit message
+commit_message=$(cat "$COMMIT_MSG_FILE")
+
+# Get the first line of the commit message
+first_line=$(head -n 1 "$COMMIT_MSG_FILE")
+
+# Conventional commit pattern
+# Format: type(scope): description
+conventional_pattern='^(feat|fix|docs|style|refactor|test|build|ci|chore|revert)(\([a-z0-9 -]+\))?!?: .{1,}'
+
+# Check if message follows conventional format
+if ! [[ "$commit_message" =~ $conventional_pattern ]]; then
+    echo "ERROR: Commit message doesn't follow conventional format."
+    echo "Required format: type(scope): description"
+    echo "  - Valid types: feat, fix, docs, style, refactor, test, build, ci, chore, revert"
+    echo "  - Example: 'feat(auth): add login functionality'"
+    exit 1
+fi
+
+# Check if first line is too long (max 72 characters)
+if [ ${#first_line} -gt 72 ]; then
+    echo "ERROR: First line of commit message is too long."
+    echo "The first line must be 72 characters or less."
+    echo "Current length: ${#first_line} characters"
+    exit 1
+fi

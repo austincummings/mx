@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Install git hooks
+# Create git hooks directory if it doesn't exist
+if [ ! -d ".git/hooks" ]; then
+  mkdir -p .git/hooks
+fi
+
+# Get all hook files except the install script
+echo "Installing git hooks..."
+for hook in hooks/*; do
+  # Skip directories and the install script
+  if [ -f "$hook" ] && [ "$(basename "$hook")" != "install" ]; then
+    hook_name=$(basename "$hook")
+    echo "Setting up $hook_name hook"
+    cp "$hook" ".git/hooks/$hook_name"
+    chmod +x ".git/hooks/$hook_name"
+  fi
+done
+
+echo "Git hooks installed successfully!"
