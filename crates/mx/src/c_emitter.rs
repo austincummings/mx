@@ -26,8 +26,6 @@ impl<'a> CEmitter<'a> {
     }
 
     pub fn emit(mut self) -> (String, Vec<Diagnostic>) {
-        eprintln!("MXIR: {:#?}", self.file.mxir());
-
         self.emit_preamble();
 
         let source_file_mxir_node_ref = MxirNodeRef(0);
@@ -38,7 +36,7 @@ impl<'a> CEmitter<'a> {
     }
 
     fn emit_preamble(&mut self) {
-        self.emit_line(format!("#include <stdio.h>\n\n"));
+        self.emit_line(format!("#include <stdio.h>\n"));
     }
 
     fn emit_node(&mut self, node_ref: MxirNodeRef) {

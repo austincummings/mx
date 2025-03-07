@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::{
     ast::{AstNode, AstNodeRef},
-    comptime::{ComptimeBinding, ComptimeEnv, ComptimeValue, FnProto, ParamDecl},
+    comptime::{ComptimeBinding, ComptimeEnv, ComptimeValue, FnDecl, FnProto, ParamDecl},
     diag::{Diagnostic, DiagnosticKind},
     mxir::{
         Mxir, MxirBlock, MxirBoolLiteral, MxirFnDecl, MxirIntLiteral, MxirNode, MxirNodeData,
@@ -53,7 +53,12 @@ impl<'a> Sema<'a> {
 
             // Lookup the entry point and mimic a function call
             if let Some(main_fn_decl) = self.env.get("main").cloned() {
-                stmts.push(self.analyze_resolved_fn_call(main_fn_decl, vec![], vec![]));
+                stmts.push(self.analyze_resolved_fn_call(
+                    main_fn_decl.node_ref,
+                    main_fn_decl.value,
+                    vec![],
+                    vec![],
+                ));
             } else {
                 self.report(
                     source_file_node_ref,
@@ -275,6 +280,7 @@ impl<'a> Sema<'a> {
         let node = self.node(node_ref);
         match node.kind.as_str() {
             "variable_expr" => self.analyze_variable_expr(node_ref),
+            "call_expr" => self.analyze_call_expr(node_ref),
             "int_literal" => self.analyze_int_literal(node_ref),
             "string_literal" => self.analyze_string_literal(node_ref),
             _ => self.emit_nop(node_ref, node.kind.as_str()),
@@ -294,6 +300,19 @@ impl<'a> Sema<'a> {
         } else {
             self.emit_nop(node_ref, "undefined variable")
         }
+    }
+
+    fn analyze_call_expr(&mut self, node_ref: AstNodeRef) -> MxirNodeRef {
+        let node = self.node(node_ref);
+        let callee_node_ref = node
+            .named_children
+            .get("callee")
+            .copied()
+            .expect("callee node not found");
+        let callee_value = self.comptime_eval_comptime_expr(callee_node_ref);
+
+        self.analyze_resolved_fn_call(node_ref, callee_value, vec![], vec![]);
+        self.emit_nop(node_ref, "unhandled comptime value 1")
     }
 
     fn analyze_comptime_value(&mut self, value: ComptimeValue) -> Option<MxirNodeData> {
@@ -510,55 +529,55 @@ impl<'a> Sema<'a> {
 
     fn analyze_resolved_fn_call(
         &mut self,
-        binding: ComptimeBinding,
+        node_ref: AstNodeRef,
+        binding: ComptimeValue,
         comptime_args: Vec<ComptimeValue>,
         args: Vec<ComptimeValue>,
     ) -> MxirNodeRef {
-        self.env.push_scope(self.node_range(binding.node_ref));
-
         // Check that the binding comptime value is a function
-        if let ComptimeValue::FnDecl(fn_decl) = binding.value {
+        if let ComptimeValue::FnDecl(fn_decl) = binding {
+            self.env.push_scope(self.node_range(node_ref));
             // Check that the function has the correct number of comptime parameters/args
             if fn_decl.comptime_params.len() != comptime_args.len() {
-                self.report(binding.node_ref, DiagnosticKind::InvalidFunctionCall);
-                return self.emit_nop(binding.node_ref, "invalid function call");
+                self.report(node_ref, DiagnosticKind::InvalidFunctionCall);
+                return self.emit_nop(node_ref, "invalid function call");
             }
+
+            let node = self.node(node_ref);
+
+            let proto_node_ref = node
+                .named_children
+                .get("proto")
+                .copied()
+                .expect("Function proto node not found");
+            let proto_node = self.node(proto_node_ref);
+
+            let name_node_ref = proto_node
+                .named_children
+                .get("name")
+                .copied()
+                .expect("Function name node not found");
+            let name = self.node(name_node_ref).text;
+
+            let block_ref = node.named_children.get("body").unwrap().clone();
+
+            let mxir_body_ref = self.analyze_node(block_ref);
+
+            let fn_decl_ref = self.emit(
+                AstNodeRef(0),
+                MxirNodeData::FnDecl(MxirFnDecl {
+                    name,
+                    body: mxir_body_ref,
+                }),
+            );
+
+            self.env.pop_scope();
+
+            fn_decl_ref
         } else {
-            self.report(binding.node_ref, DiagnosticKind::InvalidFunctionCall);
-            return self.emit_nop(binding.node_ref, "invalid function call");
+            self.report(node_ref, DiagnosticKind::InvalidFunctionCall);
+            return self.emit_nop(node_ref, "invalid function call");
         }
-
-        let node = self.node(binding.node_ref);
-
-        let proto_node_ref = node
-            .named_children
-            .get("proto")
-            .copied()
-            .expect("Function proto node not found");
-        let proto_node = self.node(proto_node_ref);
-
-        let name_node_ref = proto_node
-            .named_children
-            .get("name")
-            .copied()
-            .expect("Function name node not found");
-        let name = self.node(name_node_ref).text;
-
-        let block_ref = node.named_children.get("body").unwrap().clone();
-
-        let mxir_body_ref = self.analyze_node(block_ref);
-
-        let fn_decl_ref = self.emit(
-            AstNodeRef(0),
-            MxirNodeData::FnDecl(MxirFnDecl {
-                name,
-                body: mxir_body_ref,
-            }),
-        );
-
-        self.env.pop_scope();
-
-        fn_decl_ref
     }
 
     fn emit(&mut self, ast_node: AstNodeRef, data: MxirNodeData) -> MxirNodeRef {
