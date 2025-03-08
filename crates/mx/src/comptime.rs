@@ -16,15 +16,13 @@ pub enum ComptimeValue {
 #[derive(Debug, Clone)]
 pub struct FnDecl {
     pub node_ref: AstNodeRef,
-    pub name: String,
-    pub comptime_params: Vec<ParamDecl>,
-    pub params: Vec<ParamDecl>,
-    pub return_type: ComptimeValue,
+    pub proto: Box<FnProto>,
     pub body_ref: AstNodeRef,
 }
 
 #[derive(Debug, Clone)]
 pub struct FnProto {
+    pub name: Option<String>,
     pub comptime_params: Vec<ParamDecl>,
     pub params: Vec<ParamDecl>,
     pub return_type: ComptimeValue,
@@ -80,27 +78,25 @@ impl ComptimeEnv {
     pub fn declare_fn(
         &mut self,
         node_ref: AstNodeRef,
-        name: &str,
-        comptime_params: Vec<ParamDecl>,
-        params: Vec<ParamDecl>,
-        return_type: ComptimeValue,
+        proto: FnProto,
         body_ref: AstNodeRef,
     ) -> Result<(), &'static str> {
-        if self.0.get(name).is_some() {
+        let Some(name) = proto.name.clone() else {
+            return Err("Function name is missing");
+        };
+
+        if self.0.get(name.as_str()).is_some() {
             return Err("Duplicate declaration");
         }
 
         self.0.insert(
-            name,
+            name.as_str(),
             ComptimeBinding {
                 node_ref,
                 ty: None,
                 value: ComptimeValue::FnDecl(Box::new(FnDecl {
-                    node_ref: node_ref,
-                    name: name.to_string(),
-                    comptime_params,
-                    params,
-                    return_type,
+                    node_ref,
+                    proto: Box::new(proto),
                     body_ref,
                 })),
             },
@@ -210,22 +206,25 @@ mod tests {
         let body_ref = AstNodeRef(2);
         let return_type = ComptimeValue::Type;
 
-        env.declare_fn(
-            fn_node_ref,
-            "test_fn",
-            vec![],
-            vec![],
+        // Create a FnProto struct with the required fields
+        let proto = FnProto {
+            name: Some("test_fn".to_string()),
+            comptime_params: vec![],
+            params: vec![],
             return_type,
-            body_ref,
-        );
+        };
+
+        // Call declare_fn with the correct parameters
+        env.declare_fn(fn_node_ref, proto, body_ref).unwrap();
 
         let binding = env.get("test_fn").unwrap();
         if let ComptimeValue::FnDecl(fn_decl) = &binding.value {
-            assert_eq!(fn_decl.name, "test_fn");
+            // Check that the name in proto is what we expect
+            assert_eq!(fn_decl.proto.name, Some("test_fn".to_string()));
             // Check that the body_ref is the same we passed
             assert!(matches!(fn_decl.body_ref, AstNodeRef(2)));
             // Check the return type is Type
-            assert!(matches!(fn_decl.return_type, ComptimeValue::Type));
+            assert!(matches!(fn_decl.proto.return_type, ComptimeValue::Type));
         } else {
             panic!("Expected FnDecl");
         }
@@ -373,12 +372,16 @@ mod tests {
     #[test]
     fn test_comptime_value_variants() {
         // Test FnDecl
-        let fn_decl = ComptimeValue::FnDecl(Box::new(FnDecl {
-            node_ref: AstNodeRef(1),
-            name: "test_fn".to_string(),
+        let fn_proto = FnProto {
+            name: Some("test_fn".to_string()),
             comptime_params: vec![],
             params: vec![],
             return_type: ComptimeValue::Type,
+        };
+
+        let fn_decl = ComptimeValue::FnDecl(Box::new(FnDecl {
+            node_ref: AstNodeRef(1),
+            proto: Box::new(fn_proto),
             body_ref: AstNodeRef(1),
         }));
 
