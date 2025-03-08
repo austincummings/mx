@@ -16,15 +16,13 @@ pub enum ComptimeValue {
 #[derive(Debug, Clone)]
 pub struct FnDecl {
     pub node_ref: AstNodeRef,
-    pub name: String,
-    pub comptime_params: Vec<ParamDecl>,
-    pub params: Vec<ParamDecl>,
-    pub return_type: ComptimeValue,
+    pub proto: Box<FnProto>,
     pub body_ref: AstNodeRef,
 }
 
 #[derive(Debug, Clone)]
 pub struct FnProto {
+    pub name: Option<String>,
     pub comptime_params: Vec<ParamDecl>,
     pub params: Vec<ParamDecl>,
     pub return_type: ComptimeValue,

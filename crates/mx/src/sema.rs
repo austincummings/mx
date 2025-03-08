@@ -311,7 +311,9 @@ impl<'a> Sema<'a> {
             .expect("callee node not found");
         let callee_value = self.comptime_eval_comptime_expr(callee_node_ref);
 
-        self.analyze_resolved_fn_call(node_ref, callee_value, vec![], vec![]);
+        eprintln!("analyze_call_expr: callee_value = {:?}", callee_value);
+
+        // self.analyze_resolved_fn_call(node_ref, callee_value, vec![], vec![]);
         self.emit_nop(node_ref, "unhandled comptime value 1")
     }
 
@@ -398,6 +400,13 @@ impl<'a> Sema<'a> {
         // Push a comptime scope for analyzing the function prototype
         self.env.push_scope(expr_node.range);
 
+        let name = if let Some(name_ref) = expr_node.named_children.get("name").copied() {
+            let name = self.node(name_ref);
+            Some(name.text)
+        } else {
+            None
+        };
+
         // Extract and bind comptime parameters
         let comptime_params = self.bind_comptime_params(expr_node_ref, "comptime_params");
 
@@ -416,6 +425,7 @@ impl<'a> Sema<'a> {
         self.env.pop_scope();
 
         let fn_proto = Box::new(FnProto {
+            name,
             comptime_params,
             params,
             return_type,
@@ -538,7 +548,7 @@ impl<'a> Sema<'a> {
         if let ComptimeValue::FnDecl(fn_decl) = binding {
             self.env.push_scope(self.node_range(node_ref));
             // Check that the function has the correct number of comptime parameters/args
-            if fn_decl.comptime_params.len() != comptime_args.len() {
+            if fn_decl.proto.comptime_params.len() != comptime_args.len() {
                 self.report(node_ref, DiagnosticKind::InvalidFunctionCall);
                 return self.emit_nop(node_ref, "invalid function call");
             }
