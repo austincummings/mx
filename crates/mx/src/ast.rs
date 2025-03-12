@@ -5,6 +5,12 @@ use crate::position::Range;
 #[derive(Debug, Clone)]
 pub struct Ast(pub Vec<AstNode>);
 
+impl Default for Ast {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Ast {
     pub fn new() -> Self {
         Self(Vec::new())

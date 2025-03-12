@@ -33,7 +33,7 @@ impl<'a> Parser<'a> {
         let tree = self.tree.clone();
         self.walk_tree(
             self.file.file.path.as_str(),
-            tree.root_node().clone(),
+            tree.root_node(),
             self.file.file.src.as_str(),
         );
 

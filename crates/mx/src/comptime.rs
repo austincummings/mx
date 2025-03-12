@@ -54,6 +54,12 @@ pub struct ComptimeBinding {
 #[derive(Debug, Clone)]
 pub struct ComptimeEnv(pub SymbolTableSet<ComptimeBinding, Range>);
 
+impl Default for ComptimeEnv {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ComptimeEnv {
     pub fn new() -> Self {
         ComptimeEnv(SymbolTableSet::new())
@@ -175,10 +181,10 @@ mod tests {
 
         // We'll test scope management by declaring and looking up values
         env.push_scope(make_range(0, 10));
-        env.declare_const(AstNodeRef(1), "test1", None, ComptimeValue::ComptimeInt(1));
+        let _ = env.declare_const(AstNodeRef(1), "test1", None, ComptimeValue::ComptimeInt(1));
 
         env.push_scope(make_range(2, 8));
-        env.declare_const(AstNodeRef(2), "test2", None, ComptimeValue::ComptimeInt(2));
+        let _ = env.declare_const(AstNodeRef(2), "test2", None, ComptimeValue::ComptimeInt(2));
 
         // Both values should be accessible
         assert!(env.lookup("test1").is_some());
@@ -239,7 +245,7 @@ mod tests {
         let const_type = Some(ComptimeValue::Type);
         let const_value = ComptimeValue::ComptimeInt(42);
 
-        env.declare_const(const_node_ref, "MY_CONST", const_type, const_value);
+        let _ = env.declare_const(const_node_ref, "MY_CONST", const_type, const_value);
 
         let binding = env.get("MY_CONST").unwrap();
         assert!(matches!(binding.node_ref, AstNodeRef(3)));
@@ -301,11 +307,11 @@ mod tests {
 
         // Outer scope
         env.push_scope(make_range(0, 100));
-        env.declare_const(AstNodeRef(1), "outer", None, ComptimeValue::ComptimeInt(1));
+        let _ = env.declare_const(AstNodeRef(1), "outer", None, ComptimeValue::ComptimeInt(1));
 
         // Inner scope
         env.push_scope(make_range(10, 90));
-        env.declare_const(AstNodeRef(2), "inner", None, ComptimeValue::ComptimeInt(2));
+        let _ = env.declare_const(AstNodeRef(2), "inner", None, ComptimeValue::ComptimeInt(2));
 
         // Test lookup from inner scope
         let outer_binding = env.lookup("outer").unwrap();
@@ -343,11 +349,11 @@ mod tests {
 
         // Outer scope
         env.push_scope(make_range(0, 100));
-        env.declare_const(AstNodeRef(1), "x", None, ComptimeValue::ComptimeInt(1));
+        let _ = env.declare_const(AstNodeRef(1), "x", None, ComptimeValue::ComptimeInt(1));
 
         // Inner scope
         env.push_scope(make_range(10, 90));
-        env.declare_const(AstNodeRef(2), "x", None, ComptimeValue::ComptimeInt(2));
+        let _ = env.declare_const(AstNodeRef(2), "x", None, ComptimeValue::ComptimeInt(2));
 
         // Should get inner x
         let x_binding = env.lookup("x").unwrap();
@@ -387,7 +393,7 @@ mod tests {
 
         // Test primitive values
         let int_val = ComptimeValue::ComptimeInt(42);
-        let float_val = ComptimeValue::ComptimeFloat(3.14);
+        let float_val = ComptimeValue::ComptimeFloat(42.0);
         let string_val = ComptimeValue::ComptimeString("hello".to_string());
         let bool_val = ComptimeValue::ComptimeBool(true);
         let type_val = ComptimeValue::Type;
@@ -402,7 +408,7 @@ mod tests {
 
         // For float, need more specific check
         if let ComptimeValue::ComptimeFloat(val) = float_val {
-            assert!((val - 3.14).abs() < f64::EPSILON);
+            assert!((val - 42.0).abs() < f64::EPSILON);
         }
 
         // For string, check the content
@@ -421,13 +427,13 @@ mod tests {
         env.push_scope(make_range(20, 80));
 
         // Add some bindings to each scope
-        env.declare_const(AstNodeRef(1), "a", None, ComptimeValue::ComptimeInt(1));
+        let _ = env.declare_const(AstNodeRef(1), "a", None, ComptimeValue::ComptimeInt(1));
         env.pop_scope();
 
-        env.declare_const(AstNodeRef(2), "b", None, ComptimeValue::ComptimeInt(2));
+        let _ = env.declare_const(AstNodeRef(2), "b", None, ComptimeValue::ComptimeInt(2));
         env.pop_scope();
 
-        env.declare_const(AstNodeRef(3), "c", None, ComptimeValue::ComptimeInt(3));
+        let _ = env.declare_const(AstNodeRef(3), "c", None, ComptimeValue::ComptimeInt(3));
 
         // Push a new scope
         env.push_scope(make_range(30, 70));
@@ -449,7 +455,7 @@ mod tests {
         );
 
         // Add a binding with the same name to verify we're getting the most local one
-        env.declare_const(AstNodeRef(4), "c", None, ComptimeValue::ComptimeInt(4));
+        let _ = env.declare_const(AstNodeRef(4), "c", None, ComptimeValue::ComptimeInt(4));
 
         let c_binding = env.lookup("c").unwrap();
         if let ComptimeValue::ComptimeInt(val) = &c_binding.value {

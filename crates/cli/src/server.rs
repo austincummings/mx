@@ -127,8 +127,7 @@ impl LanguageServer for MXLanguageServer {
         let uri = params.text_document.uri;
 
         let text = params
-            .content_changes
-            .get(0)
+            .content_changes.first()
             .map(|change| change.text.clone())
             .unwrap_or_default();
 

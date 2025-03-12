@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::{
     ast::{AstNode, AstNodeRef},
-    comptime::{ComptimeBinding, ComptimeEnv, ComptimeValue, FnDecl, FnProto, ParamDecl},
+    comptime::{ComptimeEnv, ComptimeValue, FnProto, ParamDecl},
     diag::{Diagnostic, DiagnosticKind},
     mxir::{
         Mxir, MxirBlock, MxirBoolLiteral, MxirFnDecl, MxirIntLiteral, MxirNode, MxirNodeData,
@@ -153,7 +153,7 @@ impl<'a> Sema<'a> {
                 return_type,
             };
 
-            if let Err(_) = self.env.declare_fn(node_ref, proto, body_ref) {
+            if self.env.declare_fn(node_ref, proto, body_ref).is_err() {
                 // Report duplicate definition
                 self.report(node_ref, DiagnosticKind::DuplicateDefinition);
             }
@@ -173,11 +173,11 @@ impl<'a> Sema<'a> {
         let name_node = self.file.node(name_ref).expect("Name node not found");
         let name = name_node.text.as_str();
 
-        let ty = if let Some(ty_ref) = node.named_children.get("type").copied() {
-            Some(self.comptime_eval_comptime_expr(ty_ref))
-        } else {
-            None
-        };
+        let ty = node
+            .named_children
+            .get("type")
+            .copied()
+            .map(|ty_ref| self.comptime_eval_comptime_expr(ty_ref));
 
         let value_ref = node
             .named_children
@@ -186,7 +186,7 @@ impl<'a> Sema<'a> {
             .expect("Constant value not found");
         let value = self.comptime_eval_comptime_expr(value_ref);
 
-        if let Err(_) = self.env.declare_const(node_ref, name, ty, value) {
+        if self.env.declare_const(node_ref, name, ty, value).is_err() {
             // Report duplicate definition
             self.report(node_ref, DiagnosticKind::DuplicateDefinition);
         }
@@ -205,21 +205,21 @@ impl<'a> Sema<'a> {
         let name_node = self.file.node(name_ref).expect("Name node not found");
         let name = name_node.text.as_str();
 
-        let ty = if let Some(ty_ref) = node.named_children.get("type").copied() {
-            Some(self.comptime_eval_comptime_expr(ty_ref))
-        } else {
-            None
-        };
+        let ty = node
+            .named_children
+            .get("type")
+            .copied()
+            .map(|ty_ref| self.comptime_eval_comptime_expr(ty_ref));
 
         let value_ref = node.named_children.get("value").copied();
 
-        let mxir_value_ref = if let Some(value_ref) = value_ref {
-            Some(self.analyze_expr(value_ref))
-        } else {
-            None
-        };
+        let mxir_value_ref = value_ref.map(|value_ref| self.analyze_expr(value_ref));
 
-        if let Err(_) = self.env.declare_var(node_ref, name, ty.clone(), value_ref) {
+        if self
+            .env
+            .declare_var(node_ref, name, ty.clone(), value_ref)
+            .is_err()
+        {
             // Report duplicate definition
             self.report(node_ref, DiagnosticKind::DuplicateDefinition);
             return self.emit_nop(node_ref, "duplicate definition");
@@ -542,7 +542,7 @@ impl<'a> Sema<'a> {
         node_ref: AstNodeRef,
         binding: ComptimeValue,
         comptime_args: Vec<ComptimeValue>,
-        args: Vec<ComptimeValue>,
+        _args: Vec<ComptimeValue>,
     ) -> MxirNodeRef {
         // Check that the binding comptime value is a function
         if let ComptimeValue::FnDecl(fn_decl) = binding {
@@ -569,7 +569,7 @@ impl<'a> Sema<'a> {
                 .expect("Function name node not found");
             let name = self.node(name_node_ref).text;
 
-            let block_ref = node.named_children.get("body").unwrap().clone();
+            let block_ref = *node.named_children.get("body").unwrap();
 
             let mxir_body_ref = self.analyze_node(block_ref);
 
@@ -586,7 +586,7 @@ impl<'a> Sema<'a> {
             fn_decl_ref
         } else {
             self.report(node_ref, DiagnosticKind::InvalidFunctionCall);
-            return self.emit_nop(node_ref, "invalid function call");
+            self.emit_nop(node_ref, "invalid function call")
         }
     }
 

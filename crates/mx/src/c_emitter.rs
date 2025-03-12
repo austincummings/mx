@@ -36,7 +36,7 @@ impl<'a> CEmitter<'a> {
     }
 
     fn emit_preamble(&mut self) {
-        self.emit_line(format!("#include <stdio.h>\n"));
+        self.emit_line("#include <stdio.h>\n".to_string());
     }
 
     fn emit_node(&mut self, node_ref: MxirNodeRef) {
@@ -56,7 +56,7 @@ impl<'a> CEmitter<'a> {
             }
             MxirNodeData::ExprStmt(ref expr) => {
                 self.emit_node(*expr);
-                self.emit_inline(format!(";"));
+                self.emit_inline(";".to_string());
             }
             MxirNodeData::Block(ref block) => {
                 self.emit_block(block);
@@ -65,17 +65,17 @@ impl<'a> CEmitter<'a> {
                 self.emit_inline(format!("{}", int_literal.value));
             }
             MxirNodeData::StringLiteral(ref string_literal) => {
-                self.emit_inline(format!("{}", string_literal.value));
+                self.emit_inline(string_literal.value.to_string());
             }
             MxirNodeData::VarExpr(ref var_expr) => {
-                self.emit_inline(format!("{}", var_expr.name));
+                self.emit_inline(var_expr.name.to_string());
             }
             MxirNodeData::Return(ref ret) => {
-                self.emit_line(format!("return "));
+                self.emit_line("return ".to_string());
                 if let Some(ret_ref) = ret.0 {
                     self.emit_node(ret_ref);
                 }
-                self.emit_inline(format!(";"));
+                self.emit_inline(";".to_string());
             }
             _ => {
                 self.emit_inline(format!("/* Unhandled node: {} */", node_ref.0));
@@ -90,10 +90,10 @@ impl<'a> CEmitter<'a> {
     fn emit_var_decl(&mut self, var_decl: &MxirVarDecl) {
         self.emit_line(format!("int {}", var_decl.name));
         if let Some(value_ref) = var_decl.value {
-            self.emit_inline(format!(" = "));
+            self.emit_inline(" = ".to_string());
             self.emit_node(value_ref);
         }
-        self.emit_inline(format!(";"));
+        self.emit_inline(";".to_string());
     }
 
     fn emit_fn_decl(&mut self, fn_decl: &MxirFnDecl) {
@@ -104,22 +104,22 @@ impl<'a> CEmitter<'a> {
         //     }
         //     self.emit_code(format!("{}", param.name));
         // }
-        self.emit_inline(format!(") "));
+        self.emit_inline(") ".to_string());
         self.emit_node(fn_decl.body);
     }
 
     fn emit_block(&mut self, block: &MxirBlock) {
-        self.emit_line(format!("{{\n"));
+        self.emit_line("{\n".to_string());
         self.indent();
         self.emit_body(&block.0);
         self.dedent();
-        self.emit_line(format!("}}\n"));
+        self.emit_line("}\n".to_string());
     }
 
     fn emit_body(&mut self, node_refs: &Vec<MxirNodeRef>) {
         for node_ref in node_refs {
             self.emit_node(*node_ref);
-            self.emit_inline(format!("\n"));
+            self.emit_inline("\n".to_string());
         }
     }
 

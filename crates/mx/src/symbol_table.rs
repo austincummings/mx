@@ -9,6 +9,12 @@ pub struct SymbolTableSet<TValue, TTableData> {
     pub stack: Vec<SymbolTableRef>,
 }
 
+impl<TValue, TTableData> Default for SymbolTableSet<TValue, TTableData> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<TValue, TTableData> SymbolTableSet<TValue, TTableData> {
     pub fn new() -> Self {
         SymbolTableSet {
@@ -99,6 +105,10 @@ impl<TValue, TTableData> SymbolTable<TValue, TTableData> {
             parent,
             members: HashMap::new(),
         }
+    }
+
+    pub fn data(&self) -> &TTableData {
+        &self.data
     }
 
     pub fn insert(&mut self, name: &str, val: TValue) {

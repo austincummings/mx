@@ -20,7 +20,7 @@ async fn main() {
             let stdin = tokio::io::stdin();
             let stdout = tokio::io::stdout();
 
-            let (service, socket) = LspService::new(|client| MXLanguageServer::new(client));
+            let (service, socket) = LspService::new(MXLanguageServer::new);
             Server::new(stdin, stdout, socket).serve(service).await;
         }
         "compile" => {
@@ -29,7 +29,7 @@ async fn main() {
             stdin()
                 .read_to_string(&mut input)
                 .expect("Failed to read from stdin");
-            let src_file = UnparsedSourceFile::new("/dev/stdin".into(), input.as_str());
+            let src_file = UnparsedSourceFile::new("/dev/stdin", input.as_str());
             let parsed_src_file = src_file.parse();
             let analyzed_file = parsed_src_file.analyze();
             let c_file = analyzed_file.emit_c();
