@@ -19,6 +19,7 @@ pub enum MxirNodeData {
     Nop(String),
 
     // Declarations
+    BuiltinFnDecl(MxirBuiltinFnDecl),
     FnDecl(MxirFnDecl),
     VarDecl(MxirVarDecl),
 
@@ -33,10 +34,17 @@ pub enum MxirNodeData {
     StringLiteral(MxirStringLiteral),
     BoolLiteral(MxirBoolLiteral),
     VarExpr(MxirVarExpr),
+    CallExpr(MxirCallExpr),
 }
 
 #[derive(Debug, Clone)]
 pub struct MxirReturn(pub Option<MxirNodeRef>);
+
+#[derive(Debug, Clone)]
+pub struct MxirBuiltinFnDecl {
+    pub name: String,
+    pub fn_: fn() -> (),
+}
 
 #[derive(Debug, Clone)]
 pub struct MxirFnDecl {
@@ -77,4 +85,10 @@ pub struct MxirBoolLiteral {
 #[derive(Debug, Clone)]
 pub struct MxirVarExpr {
     pub name: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct MxirCallExpr {
+    pub fn_decl_ref: MxirNodeRef,
+    pub args: Vec<MxirNodeRef>,
 }

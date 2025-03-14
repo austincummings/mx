@@ -14,6 +14,7 @@ pub enum DiagnosticKind {
     DuplicateDefinition,
     DuplicateParamName,
     InvalidFunctionCall,
+    IncorrectArgumentCount,
     SymbolNotFound(String),
     SyntaxError,
     SyntaxErrorExpectedToken(String),
@@ -27,6 +28,7 @@ impl DiagnosticKind {
             DiagnosticKind::DuplicateDefinition => "Duplicate definition".to_string(),
             DiagnosticKind::DuplicateParamName => "Duplicate parameter name".to_string(),
             DiagnosticKind::InvalidFunctionCall => "Invalid function call".to_string(),
+            DiagnosticKind::IncorrectArgumentCount => "Incorrect argument count".to_string(),
             DiagnosticKind::SymbolNotFound(symbol) => format!("Symbol not found: {}", symbol),
             DiagnosticKind::SyntaxError => "Syntax error".to_string(),
             DiagnosticKind::SyntaxErrorExpectedToken(token) => {

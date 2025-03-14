@@ -2,3 +2,4 @@
 [submodule "crates/tree-sitter-mx"]
 	path = crates/tree-sitter-mx
 	url = git@github.com:austincummings/tree-sitter-mx.git
+    branch = main
