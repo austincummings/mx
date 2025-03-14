@@ -3,6 +3,7 @@ use crate::{ast::AstNodeRef, position::Range, symbol_table::SymbolTableSet};
 #[derive(Debug, Clone)]
 pub enum ComptimeValue {
     Undefined,
+    BuiltinFnDecl(Box<BuiltinFnDecl>),
     FnDecl(Box<FnDecl>),
     FnProto(Box<FnProto>),
     VarDecl(Box<VarDecl>),
@@ -11,6 +12,12 @@ pub enum ComptimeValue {
     ComptimeString(String),
     ComptimeBool(bool),
     Type,
+}
+
+#[derive(Debug, Clone)]
+pub struct BuiltinFnDecl {
+    pub proto: FnProto,
+    pub f: fn() -> (),
 }
 
 #[derive(Debug, Clone)]
@@ -79,6 +86,31 @@ impl ComptimeEnv {
 
     pub fn lookup(&self, name: &str) -> Option<&ComptimeBinding> {
         self.0.lookup(name)
+    }
+
+    pub fn declare_builtin_fn(
+        &mut self,
+        proto: FnProto,
+        f: fn() -> (),
+    ) -> Result<(), &'static str> {
+        let Some(name) = proto.name.clone() else {
+            return Err("Function name is missing");
+        };
+
+        if self.0.get(name.as_str()).is_some() {
+            return Err("Duplicate declaration");
+        }
+
+        self.0.insert(
+            name.as_str(),
+            ComptimeBinding {
+                node_ref: AstNodeRef(0),
+                ty: None,
+                value: ComptimeValue::BuiltinFnDecl(Box::new(BuiltinFnDecl { proto, f })),
+            },
+        );
+
+        Ok(())
     }
 
     pub fn declare_fn(

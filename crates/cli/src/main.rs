@@ -1,5 +1,6 @@
 mod server;
 
+use mx::interpreter::Interpreter;
 use mx::source_file::UnparsedSourceFile;
 use server::MXLanguageServer;
 use std::io::Read as _;
@@ -34,6 +35,24 @@ async fn main() {
             let analyzed_file = parsed_src_file.analyze();
             let c_file = analyzed_file.emit_c();
             println!("{}", c_file.c());
+        }
+        "run" => {
+            let mut input = String::new();
+            stdin()
+                .read_to_string(&mut input)
+                .expect("Failed to read from stdin");
+            let src_file = UnparsedSourceFile::new("/dev/stdin", input.as_str());
+            let parsed_src_file = src_file.parse();
+            let analyzed_file = parsed_src_file.analyze();
+            if !analyzed_file.file().diagnostics.is_empty() {
+                eprintln!("Diagnostics: {:#?}", analyzed_file.file().diagnostics);
+                return;
+            }
+            for inst in &analyzed_file.mxir().0 {
+                println!("{:?}", inst);
+            }
+            let mut interpreter = Interpreter::new(&analyzed_file);
+            interpreter.execute();
         }
         "version" => {
             let version = env!("CARGO_PKG_VERSION");
