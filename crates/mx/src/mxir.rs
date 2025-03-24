@@ -26,6 +26,11 @@ pub enum MxirNodeData {
     // Statements
     ExprStmt(MxirNodeRef),
     Return(MxirReturn),
+    Loop(MxirLoop),
+    If(MxirIf),
+    Break,
+    Continue,
+    Assign(MxirNodeRef, MxirNodeRef),
 
     // Expressions
     Block(MxirBlock),
@@ -39,6 +44,9 @@ pub enum MxirNodeData {
 
 #[derive(Debug, Clone)]
 pub struct MxirReturn(pub Option<MxirNodeRef>);
+
+#[derive(Debug, Clone)]
+pub struct MxirLoop(pub Option<MxirNodeRef>);
 
 #[derive(Debug, Clone)]
 pub struct MxirBuiltinFnDecl {
@@ -91,4 +99,11 @@ pub struct MxirVarExpr {
 pub struct MxirCallExpr {
     pub fn_decl_ref: MxirNodeRef,
     pub args: Vec<MxirNodeRef>,
+}
+
+#[derive(Debug, Clone)]
+pub struct MxirIf {
+    pub condition: MxirNodeRef,
+    pub then_branch: MxirNodeRef,
+    pub else_branch: Option<MxirNodeRef>,
 }

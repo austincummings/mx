@@ -5,9 +5,9 @@ use crate::{
     comptime::{ComptimeEnv, ComptimeValue, FnProto, ParamDecl},
     diag::{Diagnostic, DiagnosticKind},
     mxir::{
-        Mxir, MxirBlock, MxirBoolLiteral, MxirBuiltinFnDecl, MxirCallExpr, MxirFnDecl,
-        MxirIntLiteral, MxirNode, MxirNodeData, MxirNodeRef, MxirReturn, MxirStringLiteral,
-        MxirVarDecl, MxirVarExpr,
+        Mxir, MxirBlock, MxirBoolLiteral, MxirBuiltinFnDecl, MxirCallExpr, MxirFnDecl, MxirIf,
+        MxirIntLiteral, MxirLoop, MxirNode, MxirNodeData, MxirNodeRef, MxirReturn,
+        MxirStringLiteral, MxirVarDecl, MxirVarExpr,
     },
     position::Range,
     source_file::ParsedSourceFile,
@@ -107,6 +107,11 @@ impl<'a> Sema<'a> {
             "block" => self.analyze_block(node_ref),
             "expr_stmt" => self.analyze_expr_stmt(node_ref),
             "return_stmt" => self.analyze_return_stmt(node_ref),
+            "loop_stmt" => self.analyze_loop_stmt(node_ref),
+            "if_stmt" => self.analyze_if_stmt(node_ref),
+            "break_stmt" => self.analyze_break_stmt(node_ref),
+            "continue_stmt" => self.analyze_continue_stmt(node_ref),
+            "assign_stmt" => self.analyze_assign_stmt(node_ref),
             _ => {
                 // eprintln!("Unsupported node type: {}", node.kind);
                 self.emit_nop(node_ref, node.kind.as_str())
@@ -131,7 +136,6 @@ impl<'a> Sema<'a> {
         } else {
             // Report error for missing function name
             self.report(node_ref, DiagnosticKind::MissingFunctionName);
-            // Use a placeholder name to continue analysis
             None
         };
 
@@ -293,6 +297,61 @@ impl<'a> Sema<'a> {
         self.emit(node_ref, MxirNodeData::Return(mxir_return))
     }
 
+    fn analyze_loop_stmt(&mut self, node_ref: AstNodeRef) -> MxirNodeRef {
+        let node = self.node(node_ref);
+        let body_node_ref = node
+            .named_children
+            .get("body")
+            .copied()
+            .expect("Loop statement must have a body");
+        let body = self.analyze_expr(body_node_ref);
+        self.emit(node_ref, MxirNodeData::Loop(MxirLoop(Some(body))))
+    }
+
+    fn analyze_if_stmt(&mut self, node_ref: AstNodeRef) -> MxirNodeRef {
+        let node = self.node(node_ref);
+        let condition_node_ref = node
+            .named_children
+            .get("condition")
+            .copied()
+            .expect("If statement must have a condition");
+        let condition = self.analyze_expr(condition_node_ref);
+        let then_node_ref = node
+            .named_children
+            .get("then")
+            .copied()
+            .expect("If statement must have a then branch");
+        let then_branch = self.analyze_expr(then_node_ref);
+        let else_branch = node
+            .named_children
+            .get("else")
+            .copied()
+            .map(|else_node_ref| self.analyze_expr(else_node_ref));
+        self.emit(
+            node_ref,
+            MxirNodeData::If(MxirIf {
+                condition,
+                then_branch,
+                else_branch,
+            }),
+        )
+    }
+
+    fn analyze_break_stmt(&mut self, node_ref: AstNodeRef) -> MxirNodeRef {
+        self.emit(node_ref, MxirNodeData::Break)
+    }
+
+    fn analyze_continue_stmt(&mut self, node_ref: AstNodeRef) -> MxirNodeRef {
+        self.emit(node_ref, MxirNodeData::Continue)
+    }
+
+    fn analyze_assign_stmt(&mut self, node_ref: AstNodeRef) -> MxirNodeRef {
+        let node = self.node(node_ref);
+        let lhs = self.analyze_expr(node.children[0]);
+        let rhs = self.analyze_expr(node.children[1]);
+        self.emit(node_ref, MxirNodeData::Assign(lhs, rhs))
+    }
+
     fn analyze_expr(&mut self, node_ref: AstNodeRef) -> MxirNodeRef {
         let node = self.node(node_ref);
         match node.kind.as_str() {
@@ -300,6 +359,7 @@ impl<'a> Sema<'a> {
             "call_expr" => self.analyze_call_expr(node_ref),
             "int_literal" => self.analyze_int_literal(node_ref),
             "string_literal" => self.analyze_string_literal(node_ref),
+            "block" => self.analyze_block(node_ref),
             _ => self.emit_nop(node_ref, node.kind.as_str()),
         }
     }
